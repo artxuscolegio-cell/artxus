@@ -7,6 +7,8 @@ interface Sparkle {
   y: number;
   size: number;
   color: string;
+  dx: number;
+  dy: number;
 }
 
 export function CursorSparkles() {
@@ -17,22 +19,34 @@ export function CursorSparkles() {
 
   useEffect(() => {
     const createSparkle = (x: number, y: number) => {
-      if (Math.random() > 0.5) return;
+      // Create a cluster of 3 sparkles per move for the "fairy dust" effect
+      const count = 3;
+      const newSparklesArray: Sparkle[] = [];
 
-      const newSparkle: Sparkle = {
-        id: idRef.current++,
-        x: x,
-        y: y,
-        size: Math.random() * 10 + 5, // 5px to 15px
-        color: color,
-      };
+      for (let i = 0; i < count; i++) {
+        const offset = 30; // Max distance from cursor
+        const rx = x + (Math.random() - 0.5) * offset;
+        const ry = y + (Math.random() - 0.5) * offset;
 
-      setSparkles((prev) => [...prev, newSparkle]);
+        const newSparkle: Sparkle = {
+          id: idRef.current++,
+          x: rx,
+          y: ry,
+          size: Math.random() * 8 + 2, // 2px to 10px (smaller for dust)
+          color: color,
+          dx: (Math.random() - 0.5) * 60, // Random horizontal drift
+          dy: (Math.random() - 0.5) * 60 - 20, // Random vertical drift (tends to go up)
+        };
 
-      // Remove the sparkle after animation (0.8s)
-      setTimeout(() => {
-        setSparkles((prev) => prev.filter((s) => s.id !== newSparkle.id));
-      }, 800);
+        newSparklesArray.push(newSparkle);
+
+        // Remove the sparkle after animation (1s for a slower float)
+        setTimeout(() => {
+          setSparkles((prev) => prev.filter((s) => s.id !== newSparkle.id));
+        }, 1000);
+      }
+
+      setSparkles((prev) => [...prev, ...newSparklesArray]);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -60,14 +74,16 @@ export function CursorSparkles() {
           key={s.id}
           className="sparkle"
           style={{
-            left: s.x - s.size / 2,
-            top: s.y - s.size / 2,
+            left: s.x,
+            top: s.y,
             width: s.size,
             height: s.size,
             backgroundColor: s.color,
-            boxShadow: `0 0 ${s.size}px ${s.size / 2}px ${s.color}80`,
+            boxShadow: `0 0 ${s.size * 2}px ${s.size}px ${s.color}aa`, // Stronger glow
+            '--dx': `${s.dx}px`,
+            '--dy': `${s.dy}px`,
             animationDuration: `${Math.random() * 0.5 + 0.5}s`,
-          }}
+          } as React.CSSProperties}
         />
       ))}
     </>
