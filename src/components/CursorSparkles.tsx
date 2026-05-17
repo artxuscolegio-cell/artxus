@@ -16,14 +16,13 @@ export function CursorSparkles() {
   const color = settings?.primaryColor || '#8b5cf6'; // Default to violet if none
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Add a sparkle every few frames to avoid too many DOM elements
+    const createSparkle = (x: number, y: number) => {
       if (Math.random() > 0.5) return;
 
       const newSparkle: Sparkle = {
         id: idRef.current++,
-        x: e.clientX,
-        y: e.clientY,
+        x: x,
+        y: y,
         size: Math.random() * 10 + 5, // 5px to 15px
         color: color,
       };
@@ -36,8 +35,22 @@ export function CursorSparkles() {
       }, 800);
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      createSparkle(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        createSparkle(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, [color]);
 
   return (
