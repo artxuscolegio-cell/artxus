@@ -3,7 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import type { Photo, Comment } from '../types';
 import * as fb from '../appwriteService';
 
-export function PhotoCard({ photo, onDelete }: { photo: Photo; onDelete: () => void }) {
+export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onDelete: () => void; onImageClick: () => void }) {
   const { currentUser, settings, toggleLike, addComment } = useAppStore();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -63,8 +63,9 @@ export function PhotoCard({ photo, onDelete }: { photo: Photo; onDelete: () => v
         <img
           src={photo.imageUrl}
           alt={photo.description || 'Foto'}
-          className="w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
           style={{ aspectRatio: '1' }}
+          onClick={onImageClick}
         />
 
         {isOwner && (
@@ -165,6 +166,7 @@ export function PhotoCard({ photo, onDelete }: { photo: Photo; onDelete: () => v
 
 export function Gallery() {
   const { photos, settings, deletePhoto } = useAppStore();
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const sortedPhotos = useMemo(() => {
     const sorted = [...photos];
@@ -190,28 +192,46 @@ export function Gallery() {
     );
   }
 
-  if (settings.layout === 'masonry') {
+  const renderContent = () => {
+    if (settings.layout === 'masonry') {
+      return (
+        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
+          {sortedPhotos.map(photo => (
+            <div key={photo.id} className="mb-4 break-inside-avoid">
+              <PhotoCard photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    const gridClass =
+      settings.layout === 'grid'
+        ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
+        : 'grid grid-cols-1 max-w-2xl mx-auto gap-4';
+
     return (
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
+      <div className={gridClass}>
         {sortedPhotos.map(photo => (
-          <div key={photo.id} className="mb-4 break-inside-avoid">
-            <PhotoCard photo={photo} onDelete={() => deletePhoto(photo.id)} />
-          </div>
+          <PhotoCard key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} />
         ))}
       </div>
     );
-  }
-
-  const gridClass =
-    settings.layout === 'grid'
-      ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-      : 'grid grid-cols-1 max-w-2xl mx-auto gap-4';
+  };
 
   return (
-    <div className={gridClass}>
-      {sortedPhotos.map(photo => (
-        <PhotoCard key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} />
-      ))}
-    </div>
+    <>
+      {renderContent()}
+
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[10000] flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button className="absolute top-4 right-4 text-white text-4xl">&times;</button>
+          <img src={fullscreenImage} alt="Full size" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+        </div>
+      )}
+    </>
   );
 }
