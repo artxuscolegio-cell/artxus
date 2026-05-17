@@ -19,8 +19,8 @@ export function CursorSparkles() {
 
   useEffect(() => {
     const createSparkle = (x: number, y: number) => {
-      // Create a cluster of 3 sparkles per move for the "fairy dust" effect
-      const count = 3;
+      // Create a cluster of 5 sparkles per move for the "fairy dust" effect
+      const count = 5;
       const newSparklesArray: Sparkle[] = [];
 
       for (let i = 0; i < count; i++) {
@@ -32,7 +32,7 @@ export function CursorSparkles() {
           id: idRef.current++,
           x: rx,
           y: ry,
-          size: Math.random() * 8 + 2, // 2px to 10px (smaller for dust)
+          size: Math.random() * 3 + 1, // 1px to 4px (literalmente diminutos)
           color: color,
           dx: (Math.random() - 0.5) * 60, // Random horizontal drift
           dy: (Math.random() - 0.5) * 60 - 20, // Random vertical drift (tends to go up)
