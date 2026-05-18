@@ -74,7 +74,7 @@ export const useAppStore = create<AppState>()(
       isAppwriteReady: false,
 
       setAccessCode: (code: string) => {
-        if (code === ACCESS_CODE) {
+        if (code.toUpperCase() === ACCESS_CODE) {
           set({ accessCode: code, authMode: 'login' });
         }
       },
