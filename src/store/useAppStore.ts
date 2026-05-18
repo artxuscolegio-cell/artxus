@@ -214,7 +214,7 @@ export const useAppStore = create<AppState>()(
         });
       },
 
-      addPhoto: (imageUrl: string, description?: string) => {
+      addPhoto: async (imageUrl: string, description?: string) => {
         const { currentUser, photos } = get();
         if (!currentUser) return;
         
@@ -229,12 +229,18 @@ export const useAppStore = create<AppState>()(
         };
         
         try {
-          fb.addPhotoToAppwrite({
+          await fb.addPhotoToAppwrite({
             userId: currentUser.id,
             username: currentUser.username,
             imageUrl,
             description,
             likes: [],
+          });
+          
+          await fb.addNotificationToAppwrite({
+            userId: currentUser.id,
+            username: currentUser.username,
+            type: 'upload',
           });
         } catch (e) {
           set({ photos: [newPhoto, ...photos] });
@@ -306,9 +312,11 @@ export const useAppStore = create<AppState>()(
         const { photos, currentUser } = get();
         if (!currentUser) return;
         
+        let hasLikedBefore = false;
         const updatedPhotos = photos.map(photo => {
           if (photo.id === photoId) {
             const hasLiked = photo.likes.includes(currentUser.id);
+            hasLikedBefore = hasLiked;
             return {
               ...photo,
               likes: hasLiked
@@ -325,6 +333,15 @@ export const useAppStore = create<AppState>()(
           const photo = photos.find(p => p.id === photoId);
           if (photo) {
             fb.updatePhotoLikes(photoId, updatedPhotos.find(p => p.id === photoId)?.likes || []);
+            
+            // Add notification only if liking (not unliking)
+            if (!hasLikedBefore) {
+              fb.addNotificationToAppwrite({
+                userId: currentUser.id,
+                username: currentUser.username,
+                type: 'like',
+              });
+            }
           }
         } catch (e) {}
       },
@@ -339,6 +356,12 @@ export const useAppStore = create<AppState>()(
             userId: currentUser.id,
             username: currentUser.username,
             text
+          });
+          
+          await fb.addNotificationToAppwrite({
+            userId: currentUser.id,
+            username: currentUser.username,
+            type: 'comment',
           });
         } catch (e) {
           console.error('Error adding comment:', e);

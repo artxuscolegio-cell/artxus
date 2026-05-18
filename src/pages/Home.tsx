@@ -3,13 +3,15 @@ import { useAppStore } from '../store/useAppStore';
 import { Gallery } from '../components/Gallery';
 import { UploadModal } from '../components/UploadModal';
 import { SettingsPanel } from '../components/SettingsPanel';
+import { AdminInbox } from '../components/AdminInbox';
 
 export function Home() {
   const [showUpload, setShowUpload] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showInbox, setShowInbox] = useState<boolean>(false);
   const [titleAnimation, setTitleAnimation] = useState<boolean>(false);
 
-  const { currentUser, isGuest, logout, settings, photos } = useAppStore();
+  const { currentUser, isGuest, logout, settings, photos, loginNotifications } = useAppStore();
 
   useEffect(() => {
     setTitleAnimation(true);
@@ -41,6 +43,23 @@ export function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={() => setShowInbox(true)}
+                className="p-3 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 rounded-xl transition-all text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white shadow-sm relative"
+                title="Bandeja de Entrada"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {loginNotifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                    {loginNotifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+            )}
+
             <button
               onClick={() => setShowSettings(true)}
               className="p-3 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 rounded-xl transition-all text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white shadow-sm"
@@ -96,6 +115,23 @@ export function Home() {
       {/* Modals */}
       <UploadModal isOpen={showUpload} onClose={() => setShowUpload(false)} />
       <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      
+      {/* Inbox Modal */}
+      {showInbox && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-md w-full">
+            <button
+              onClick={() => setShowInbox(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white z-10"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+              </svg>
+            </button>
+            <AdminInbox />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ export function AuthScreen() {
   const [password, setPassword] = useState<string>('');
   const [username, setUsername] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [showGuestInfo, setShowGuestInfo] = useState<boolean>(false);
 
   const { login, register, loginAsGuest, setAuthMode } = useAppStore();
 
@@ -109,6 +110,16 @@ export function AuthScreen() {
             Continuar como invitado
           </button>
 
+          <p className="text-xs text-slate-500 dark:text-white/50 text-center mt-1">
+            Nota: El modo invitado utiliza una cuenta compartida.{' '}
+            <button
+              onClick={() => setShowGuestInfo(true)}
+              className="font-bold text-slate-700 dark:text-white hover:underline"
+            >
+              Más información
+            </button>
+          </p>
+
           <div className="flex items-center gap-4 my-4">
             <div className="flex-1 h-px bg-slate-300 dark:bg-white/20"></div>
             <span className="text-slate-500 dark:text-white/50 text-sm font-medium">o</span>
@@ -131,6 +142,48 @@ export function AuthScreen() {
           ← Volver
         </button>
       </div>
+
+      {/* Guest Info Modal */}
+      {showGuestInfo && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-2xl p-6 bg-white dark:bg-slate-900 max-w-md w-full border border-slate-200 dark:border-white/10 relative">
+            <button
+              onClick={() => setShowGuestInfo(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+              </svg>
+            </button>
+            
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Información sobre el Modo Invitado</h3>
+            
+            <div className="text-sm text-slate-600 dark:text-white/70 space-y-3">
+              <p>
+                Al entrar como invitado, utilizas una cuenta compartida por todos los usuarios que eligen esta opción.
+              </p>
+              <p>
+                Esto significa que:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Las fotos que subas podrán ser vistas por cualquier otro invitado.</li>
+                <li>Cualquier invitado puede eliminar las fotos subidas en este modo.</li>
+                <li>No tendrás un perfil personalizado ni historial propio.</li>
+              </ul>
+              <p>
+                Te recomendamos **crear una cuenta propia** si deseas tener mayor privacidad y control sobre tus fotos.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => setShowGuestInfo(false)}
+              className="w-full mt-5 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

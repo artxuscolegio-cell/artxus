@@ -12,7 +12,7 @@ export interface LoginNotification {
   id: string;
   userId: string;
   username: string;
-  type: 'login' | 'register';
+  type: 'login' | 'register' | 'upload' | 'comment' | 'like';
   timestamp: Date;
   read: boolean;
 }
