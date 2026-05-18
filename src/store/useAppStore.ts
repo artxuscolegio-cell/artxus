@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Photo, UserSettings, AuthMode, LoginNotification } from '../types';
 import * as fb from '../appwriteService';
+import { account, ID } from '../appwrite';
 
 export interface AppState {
   currentUser: User | null;
@@ -17,8 +18,8 @@ export interface AppState {
 
   setAccessCode: (code: string) => void;
   setAuthMode: (mode: AuthMode) => void;
-  login: (email: string, password: string) => boolean;
-  register: (username: string, email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loginAsGuest: () => void;
 
@@ -28,6 +29,7 @@ export interface AppState {
   adminDeletePhoto: (photoId: string) => void;
   toggleLike: (photoId: string) => void;
   addComment: (photoId: string, text: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<void>;
 
   markNotificationRead: (notificationId: string) => void;
   clearAllNotifications: () => void;
@@ -97,7 +99,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      login: (email: string, password: string) => {
+      login: async (email: string, password: string) => {
         const { users, loginNotifications } = get();
         let user: User | undefined;
         
@@ -111,7 +113,21 @@ export const useAppStore = create<AppState>()(
             createdAt: new Date(),
           };
         } else {
-          user = users.find(u => u.email === email && u.password === password);
+          try {
+            await account.createEmailPasswordSession(email, password);
+            const appwriteUser = await account.get();
+            user = {
+              id: appwriteUser.$id,
+              username: appwriteUser.name,
+              email: appwriteUser.email,
+              password: password,
+              role: 'user',
+              createdAt: new Date(appwriteUser.$createdAt),
+            };
+          } catch (error) {
+            console.error('Appwrite login error:', error);
+            user = users.find(u => u.email === email && u.password === password);
+          }
         }
         
         if (user) {
@@ -136,34 +152,47 @@ export const useAppStore = create<AppState>()(
         return false;
       },
 
-      register: (username: string, email: string, password: string) => {
+      register: async (username: string, email: string, password: string) => {
         const { users, loginNotifications } = get();
         if (users.some(u => u.email === email)) return false;
-        const newUser: User = {
-          id: crypto.randomUUID(),
-          username,
-          email,
-          password,
-          role: 'user',
-          createdAt: new Date(),
-        };
-        set({ users: [...users, newUser], currentUser: newUser, isAuthenticated: true, isGuest: false });
-        
-        const newNotification: LoginNotification = {
-          id: crypto.randomUUID(),
-          userId: newUser.id,
-          username: newUser.username,
-          type: 'register',
-          timestamp: new Date(),
-          read: false,
-        };
         
         try {
-          fb.addNotificationToAppwrite({ userId: newUser.id, username: newUser.username, type: 'register' });
-        } catch (e) {
-          set({ loginNotifications: [newNotification, ...loginNotifications] });
+          const appwriteUser = await account.create(ID.unique(), email, password, username);
+          await account.createEmailPasswordSession(email, password);
+          
+          const newUser: User = {
+            id: appwriteUser.$id,
+            username: appwriteUser.name,
+            email: appwriteUser.email,
+            password: password,
+            role: 'user',
+            createdAt: new Date(appwriteUser.$createdAt),
+          };
+          
+          set({ users: [...users, newUser], currentUser: newUser, isAuthenticated: true, isGuest: false });
+          
+          const newNotification: LoginNotification = {
+            id: crypto.randomUUID(),
+            userId: newUser.id,
+            username: newUser.username,
+            type: 'register',
+            timestamp: new Date(),
+            read: false,
+          };
+          
+          try {
+            fb.addNotificationToAppwrite({ userId: newUser.id, username: newUser.username, type: 'register' });
+          } catch (e) {
+            set({ loginNotifications: [newNotification, ...loginNotifications] });
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Appwrite register error:', error);
+          if (error.code === 409) {
+            return false;
+          }
+          return false;
         }
-        return true;
       },
 
       logout: () => {
@@ -313,6 +342,17 @@ export const useAppStore = create<AppState>()(
           });
         } catch (e) {
           console.error('Error adding comment:', e);
+        }
+      },
+
+      deleteComment: async (commentId: string) => {
+        const { currentUser } = get();
+        if (!currentUser) return;
+
+        try {
+          await fb.deleteComment(commentId);
+        } catch (e) {
+          console.error('Error deleting comment:', e);
         }
       },
 

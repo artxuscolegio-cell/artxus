@@ -4,7 +4,7 @@ import type { Photo, Comment } from '../types';
 import * as fb from '../appwriteService';
 
 export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onDelete: () => void; onImageClick: () => void }) {
-  const { currentUser, settings, toggleLike, addComment } = useAppStore();
+  const { currentUser, settings, toggleLike, addComment, deleteComment } = useAppStore();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -39,6 +39,14 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
+      await deleteComment(commentId);
+      // Refresh comments
+      fb.getComments(photo.id).then(setComments);
+    }
+  };
+
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
@@ -68,7 +76,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
           onClick={onImageClick}
         />
 
-        {isOwner && (
+        {(isOwner || currentUser?.role === 'admin') && (
           <button
             onClick={onDelete}
             className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
@@ -133,9 +141,22 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
                 <p className="text-slate-400 dark:text-white/30 text-xs text-center py-2 italic">Sin comentarios aún</p>
               ) : (
                 comments.map(comment => (
-                  <div key={comment.id} className="text-xs">
-                    <span className="text-slate-700 dark:text-white/80 font-bold mr-2">{comment.username}</span>
-                    <span className="text-slate-600 dark:text-white/60">{comment.text}</span>
+                  <div key={comment.id} className="text-xs flex justify-between items-center group/comment">
+                    <div>
+                      <span className="text-slate-700 dark:text-white/80 font-bold mr-2">{comment.username}</span>
+                      <span className="text-slate-600 dark:text-white/60">{comment.text}</span>
+                    </div>
+                    {(currentUser?.id === comment.userId || currentUser?.role === 'admin') && (
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-red-500 hover:text-red-700 opacity-0 group-hover/comment:opacity-100 transition-all ml-2"
+                        title="Eliminar comentario"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))
               )}

@@ -13,12 +13,13 @@ export function AuthScreen() {
 
   const { login, register, loginAsGuest, setAuthMode } = useAppStore();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
     if (isLogin) {
-      if (!login(email, password)) {
+      const success = await login(email, password);
+      if (!success) {
         setError('Email o contraseña incorrectos');
       }
     } else {
@@ -26,7 +27,8 @@ export function AuthScreen() {
         setError('Todos los campos son requeridos');
         return;
       }
-      if (!register(username, email, password)) {
+      const success = await register(username, email, password);
+      if (!success) {
         setError('El email ya está registrado');
       }
     }

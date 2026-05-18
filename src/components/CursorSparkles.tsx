@@ -38,7 +38,7 @@ export function CursorSparkles() {
       // Explosions go faster, normal particles float gently
       const speed = isExplosion ? Math.random() * 6 + 2 : Math.random() * 1.5 + 0.2;
       const size = Math.random() * 3 + 0.5; // 0.5px to 3.5px (very tiny)
-      
+
       return {
         x,
         y,
@@ -58,7 +58,7 @@ export function CursorSparkles() {
       if (Math.random() > 0.5) {
         particlesRef.current.push(createParticle(e.clientX, e.clientY));
       }
-      
+
       // 2. Cloud effect (around cursor)
       // Generate 2 particles in a 100-150px radius
       for (let i = 0; i < 2; i++) {
@@ -66,7 +66,7 @@ export function CursorSparkles() {
         const angle = Math.random() * Math.PI * 2;
         const rx = e.clientX + Math.cos(angle) * radius;
         const ry = e.clientY + Math.sin(angle) * radius;
-        
+
         // Only create if within screen bounds
         if (rx >= 0 && rx <= window.innerWidth && ry >= 0 && ry <= window.innerHeight) {
           particlesRef.current.push(createParticle(rx, ry));
@@ -77,19 +77,19 @@ export function CursorSparkles() {
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         const t = e.touches[0];
-        
+
         // Trail
         if (Math.random() > 0.5) {
           particlesRef.current.push(createParticle(t.clientX, t.clientY));
         }
-        
+
         // Cloud (smaller radius on mobile for better density)
         for (let i = 0; i < 2; i++) {
           const radius = Math.random() * 80 + 20;
           const angle = Math.random() * Math.PI * 2;
           const rx = t.clientX + Math.cos(angle) * radius;
           const ry = t.clientY + Math.sin(angle) * radius;
-          
+
           if (rx >= 0 && rx <= window.innerWidth && ry >= 0 && ry <= window.innerHeight) {
             particlesRef.current.push(createParticle(rx, ry));
           }
@@ -110,19 +110,19 @@ export function CursorSparkles() {
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       const particles = particlesRef.current;
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        
+
         // Move
         p.x += p.vx;
         p.y += p.vy;
         p.life++;
-        
+
         // Fade out
         p.opacity = 1 - p.life / p.maxLife;
-        
+
         // Organic drift (Brownian motion style)
         p.vx += (Math.random() - 0.5) * 0.05;
         p.vy += (Math.random() - 0.5) * 0.05;
@@ -135,28 +135,28 @@ export function CursorSparkles() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        
+
         // Twinkle effect
         let currentOpacity = p.opacity;
         if (p.twinkle && Math.random() > 0.8) {
           currentOpacity = 0.1; // Dim suddenly
         }
-        
+
         ctx.fillStyle = p.color;
         ctx.globalAlpha = currentOpacity;
-        
+
         // Soft glow using shadow (Canvas native)
         ctx.shadowBlur = p.size * 4;
         ctx.shadowColor = p.color;
-        
+
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.shadowBlur = 0; // reset shadow for next particle
       }
-      
+
       requestAnimationFrame(animate);
     };
-    
+
     const animId = requestAnimationFrame(animate);
 
     return () => {

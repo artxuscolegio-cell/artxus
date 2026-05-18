@@ -1,4 +1,4 @@
-import { Client, Databases, Storage, ID, Query } from 'appwrite';
+import { Client, Databases, Storage, ID, Query, Account } from 'appwrite';
 
 export const client = new Client();
 
@@ -8,6 +8,7 @@ client
 
 export const databases = new Databases(client);
 export const storage = new Storage(client);
+export const account = new Account(client);
 
 export const APPWRITE_CONFIG = {
     databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,

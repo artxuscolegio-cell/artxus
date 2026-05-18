@@ -191,6 +191,14 @@ export async function getComments(photoId: string): Promise<Comment[]> {
   }));
 }
 
+export async function deleteComment(commentId: string) {
+  await databases.deleteDocument(
+    APPWRITE_CONFIG.databaseId,
+    APPWRITE_CONFIG.commentsCollectionId,
+    commentId
+  );
+}
+
 export function subscribeToComments(photoId: string, callback: (comments: Comment[]) => void) {
   const unsubscribe = client.subscribe(
     `databases.${APPWRITE_CONFIG.databaseId}.collections.${APPWRITE_CONFIG.commentsCollectionId}.documents`,
