@@ -104,21 +104,11 @@ export function AuthScreen() {
 
         <div className="mt-6 space-y-3">
           <button
-            onClick={() => loginAsGuest()}
+            onClick={() => setShowGuestInfo(true)}
             className="w-full py-3 bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-700 dark:text-white font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-white/20 transition-all"
           >
             Continuar como invitado
           </button>
-
-          <p className="text-xs text-slate-500 dark:text-white/50 text-center mt-1">
-            Nota: El modo invitado utiliza una cuenta compartida.{' '}
-            <button
-              onClick={() => setShowGuestInfo(true)}
-              className="font-bold text-slate-700 dark:text-white hover:underline"
-            >
-              Más información
-            </button>
-          </p>
 
           <div className="flex items-center gap-4 my-4">
             <div className="flex-1 h-px bg-slate-300 dark:bg-white/20"></div>
@@ -156,31 +146,42 @@ export function AuthScreen() {
               </svg>
             </button>
             
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Información sobre el Modo Invitado</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Advertencia: Modo Invitado</h3>
             
             <div className="text-sm text-slate-600 dark:text-white/70 space-y-3">
               <p>
-                Al entrar como invitado, utilizas una cuenta compartida por todos los usuarios que eligen esta opción.
+                Al entrar como invitado, utilizarás una **cuenta compartida** por todos los usuarios que eligen esta opción.
               </p>
               <p>
-                Esto significa que:
+                Ten en cuenta que:
               </p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Las fotos que subas podrán ser vistas por cualquier otro invitado.</li>
-                <li>Cualquier invitado puede eliminar las fotos subidas en este modo.</li>
+                <li>Las fotos que subas podrán ser vistas por cualquier otra persona que entre como invitado.</li>
+                <li>Cualquier invitado puede eliminar las fotos subidas en este modo en cualquier momento.</li>
                 <li>No tendrás un perfil personalizado ni historial propio.</li>
               </ul>
               <p>
-                Te recomendamos **crear una cuenta propia** si deseas tener mayor privacidad y control sobre tus fotos.
+                Te recomendamos **crear una cuenta propia** si deseas tener privacidad y un control total sobre tus fotos.
               </p>
             </div>
             
-            <button
-              onClick={() => setShowGuestInfo(false)}
-              className="w-full mt-5 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all"
-            >
-              Entendido
-            </button>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowGuestInfo(false)}
+                className="flex-1 py-2.5 bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white font-semibold rounded-xl hover:bg-slate-300 dark:hover:bg-white/20 transition-all text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  setShowGuestInfo(false);
+                  loginAsGuest();
+                }}
+                className="flex-1 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all text-sm shadow-md hover:shadow-primary/30"
+              >
+                Continuar
+              </button>
+            </div>
           </div>
         </div>
       )}
