@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 
 interface Particle {
@@ -19,6 +19,12 @@ export function CursorSparkles() {
   const { settings } = useAppStore();
   const color = settings?.primaryColor || '#8b5cf6';
   const particlesRef = useRef<Particle[]>([]);
+
+  const isLight = settings?.theme === 'light' ||
+    (settings?.theme === 'auto' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // In light mode use a darker, more saturated variant so sparkles pop on pastel backgrounds
+  const sparkleColor = isLight ? color + 'cc' : color;
+  const blendMode = isLight ? 'multiply' : 'screen';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,7 +51,7 @@ export function CursorSparkles() {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - (isExplosion ? 0 : 0.3), // Float up slightly
         size,
-        color,
+        color: sparkleColor,
         opacity: 1,
         life: 0,
         maxLife: isExplosion ? Math.random() * 20 + 20 : Math.random() * 60 + 40,
@@ -166,13 +172,13 @@ export function CursorSparkles() {
       window.removeEventListener('click', handleClick);
       cancelAnimationFrame(animId);
     };
-  }, [color]);
+  }, [sparkleColor, isLight]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[9999]"
-      style={{ mixBlendMode: 'screen' }}
+      className="sparkle-canvas fixed inset-0 pointer-events-none z-[9999]"
+      style={{ mixBlendMode: blendMode as React.CSSProperties['mixBlendMode'] }}
     />
   );
 }

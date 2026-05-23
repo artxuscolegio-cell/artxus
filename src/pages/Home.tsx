@@ -24,8 +24,26 @@ export function Home() {
       ? 'text-7xl'
       : 'text-5xl';
 
+  const isLight = settings.theme === 'light' || (settings.theme === 'auto' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  // Map dark gradients to pastel equivalents for light mode
+  const pastelMap: Record<string, string> = {
+    'from-violet-600 via-indigo-600 to-purple-700': 'bg-pastel-violet',
+    'from-blue-600 via-cyan-600 to-teal-700':       'bg-pastel-blue',
+    'from-pink-600 via-rose-600 to-red-700':         'bg-pastel-pink',
+    'from-green-600 via-emerald-600 to-teal-700':    'bg-pastel-green',
+    'from-orange-600 via-amber-600 to-yellow-700':   'bg-pastel-orange',
+    'from-slate-700 via-gray-600 to-slate-800':      'bg-pastel-slate',
+    'from-red-500 via-yellow-500 to-green-500':      'bg-pastel-rainbow',
+    'from-orange-500 via-pink-500 to-purple-600':    'bg-pastel-sunset',
+  };
+
+  const backgroundClass = isLight
+    ? (pastelMap[settings.backgroundGradient] ?? 'bg-pastel-violet')
+    : `bg-gradient-to-br ${settings.backgroundGradient}`;
+
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${settings.backgroundGradient} transition-all duration-700`}>
+    <div className={`min-h-screen ${backgroundClass} transition-all duration-700`}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <header className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">

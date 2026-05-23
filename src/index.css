@@ -125,6 +125,42 @@ body {
   transform: translateY(-5px);
 }
 
+/* ===================== LIGHT MODE OVERRIDES ===================== */
+
+/* Light mode: glass cards become soft pastel white */
+html.light .glass-card {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(200, 180, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(160, 120, 220, 0.12);
+}
+
+html.light .glass-card:hover {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(200, 180, 255, 0.6);
+}
+
+/* Light mode: sparkle particles use 'multiply' so they show on light backgrounds */
+html.light canvas.sparkle-canvas {
+  mix-blend-mode: multiply;
+}
+
+/* Light mode: scrollbar thumb pastel purple */
+html.light .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* ===================== PASTEL GRADIENT BACKGROUNDS ===================== */
+
+/* Light theme background utility – replaces dark gradient */
+.bg-pastel-violet  { background: linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 50%, #fce7f3 100%); }
+.bg-pastel-blue    { background: linear-gradient(135deg, #dbeafe 0%, #cffafe 50%, #e0f2fe 100%); }
+.bg-pastel-pink    { background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 50%, #ffe4e6 100%); }
+.bg-pastel-green   { background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 50%, #ecfdf5 100%); }
+.bg-pastel-orange  { background: linear-gradient(135deg, #ffedd5 0%, #fef9c3 50%, #fff7ed 100%); }
+.bg-pastel-slate   { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%); }
+.bg-pastel-rainbow { background: linear-gradient(135deg, #fce7f3 0%, #fef9c3 33%, #dcfce7 66%, #dbeafe 100%); }
+.bg-pastel-sunset  { background: linear-gradient(135deg, #fde8d0 0%, #fce7f3 50%, #ede9fe 100%); }
+
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }

@@ -32,13 +32,17 @@ function App() {
     const root = document.documentElement;
     if (settings.theme === 'dark') {
       root.classList.add('dark');
+      root.classList.remove('light');
     } else if (settings.theme === 'light') {
       root.classList.remove('dark');
+      root.classList.add('light');
     } else if (settings.theme === 'auto') {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         root.classList.add('dark');
+        root.classList.remove('light');
       } else {
         root.classList.remove('dark');
+        root.classList.add('light');
       }
     }
   }, [settings?.theme]);

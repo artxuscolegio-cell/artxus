@@ -36,7 +36,7 @@ export function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#0f172a] dark:via-[#1e1b4b] dark:to-[#312e81]">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-pastel-violet dark:bg-none dark:from-[#0f172a] dark:via-[#1e1b4b] dark:to-[#312e81] dark:bg-gradient-to-br">
       <CursorSparkles />
       <div className="glass-card animate-in rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/40 dark:border-white/10">
         <div className="text-center mb-8">
