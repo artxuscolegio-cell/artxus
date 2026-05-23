@@ -136,7 +136,7 @@ export function AuthScreen() {
       {/* Guest Info Modal */}
       {showGuestInfo && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-2xl p-6 bg-white dark:bg-slate-900 max-w-md w-full border border-slate-200 dark:border-white/10 relative">
+          <div className="glass-card animate-in-fast rounded-2xl p-6 bg-white dark:bg-slate-900 max-w-md w-full border border-slate-200 dark:border-white/10 relative">
             <button
               onClick={() => setShowGuestInfo(false)}
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white"
