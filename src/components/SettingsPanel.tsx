@@ -195,7 +195,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
           {activeTab === 'gallery' && (
             <>
               <div>
-                <label className="block text-white/80 text-sm font-medium mb-3">Orden de fotos</label>
+                <label className="block text-slate-700 dark:text-white/80 text-sm font-medium mb-3">Orden de fotos</label>
                 <div className="space-y-2">
                   {([
                     { id: 'newest', label: 'Más recientes primero' },
@@ -208,7 +208,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       className={`w-full py-3 px-4 rounded-lg text-left text-sm font-medium transition-all ${
                         settings.sortOrder === order.id
                           ? 'bg-primary text-white'
-                          : 'bg-white/10 text-white/70 hover:bg-white/20'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/70 hover:bg-slate-200 dark:hover:bg-white/20'
                       }`}
                     >
                       {order.label}
@@ -218,7 +218,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               </div>
 
               <div>
-                <label className="block text-white/80 text-sm font-medium mb-3">Diseño de galería</label>
+                <label className="block text-slate-700 dark:text-white/80 text-sm font-medium mb-3">Diseño de galería</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['grid', 'masonry', 'list'] as const).map(layout => (
                     <button
@@ -227,7 +227,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                         settings.layout === layout
                           ? 'bg-primary text-white'
-                          : 'bg-white/10 text-white/70 hover:bg-white/20'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/70 hover:bg-slate-200 dark:hover:bg-white/20'
                       }`}
                     >
                       {layout === 'grid' ? 'Cuadrícula' : layout === 'masonry' ? 'Mosaico' : 'Lista'}
@@ -237,7 +237,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               </div>
 
               <div>
-                <label className="block text-white/80 text-sm font-medium mb-3">Fotos por página</label>
+                <label className="block text-slate-700 dark:text-white/80 text-sm font-medium mb-3">Fotos por página</label>
                 <input
                   type="range"
                   min="6"
@@ -246,7 +246,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                   onChange={(e) => updateSettings({ photosPerPage: parseInt(e.target.value) })}
                   className="w-full accent-primary"
                 />
-                <div className="flex justify-between text-white/50 text-xs mt-1">
+                <div className="flex justify-between text-slate-500 dark:text-white/50 text-xs mt-1">
                   <span>6</span>
                   <span className="text-primary">{settings.photosPerPage}</span>
                   <span>24</span>
@@ -260,11 +260,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                   { key: 'showDescriptions' as const, label: 'Mostrar descripciones' },
                 ].map(({ key, label }) => (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-white/80 text-sm font-medium">{label}</span>
+                    <span className="text-slate-700 dark:text-white/80 text-sm font-medium">{label}</span>
                     <button
                       onClick={() => updateSettings({ [key]: !settings[key] })}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        settings[key] ? 'bg-primary' : 'bg-white/20'
+                        settings[key] ? 'bg-primary' : 'bg-slate-300 dark:bg-white/20'
                       }`}
                     >
                       <div
@@ -285,23 +285,23 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">🔐</span>
                   <div>
-                    <h3 className="text-amber-400 font-semibold">Página Privada</h3>
-                    <p className="text-white/60 text-sm mt-1">
+                    <h3 className="text-amber-500 dark:text-amber-400 font-semibold">Página Privada</h3>
+                    <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
                       ARTXUS es una página privada. Solo personas con el código de acceso pueden entrar.
                     </p>
-                    <p className="text-white/50 text-xs mt-2">
+                    <p className="text-slate-500 dark:text-white/50 text-xs mt-2">
                       Código actual: <span className="font-mono text-primary">ARTXUS2026</span>
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <h3 className="text-white font-medium mb-3">Tu sesión</h3>
-                <p className="text-white/60 text-sm mb-4">
+              <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+                <h3 className="text-slate-800 dark:text-white font-medium mb-3">Tu sesión</h3>
+                <p className="text-slate-600 dark:text-white/60 text-sm mb-4">
                   Como usuario registrado, tus fotos se asocian a tu perfil.
                 </p>
-                <p className="text-white/50 text-xs leading-relaxed">
+                <p className="text-slate-500 dark:text-white/50 text-xs leading-relaxed">
                   • Los invitados pueden ver y dar likes<br />
                   • Los registrados pueden subir fotos<br />
                   • Solo el autor puede eliminar sus fotos
@@ -309,7 +309,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               </div>
 
               <div className="space-y-3">
-                <p className="text-white/50 text-xs text-center">
+                <p className="text-slate-500 dark:text-white/50 text-xs text-center">
                   Tus preferencias se guardan automáticamente
                 </p>
                 <button
@@ -328,8 +328,8 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">⚠️</span>
                   <div>
-                    <h3 className="text-red-400 font-semibold">Panel de Administrador</h3>
-                    <p className="text-white/60 text-xs mt-1">
+                    <h3 className="text-red-500 dark:text-red-400 font-semibold">Panel de Administrador</h3>
+                    <p className="text-slate-600 dark:text-white/60 text-xs mt-1">
                       Tienes control total sobre el contenido
                     </p>
                   </div>
@@ -347,9 +347,9 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 </button>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white font-medium">
+                  <h3 className="text-slate-800 dark:text-white font-medium">
                     Notificaciones de acceso
                     {unreadNotifications > 0 && (
                       <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
@@ -360,7 +360,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                   {unreadNotifications > 0 && (
                     <button
                       onClick={clearAllNotifications}
-                      className="text-white/50 text-xs hover:text-white"
+                      className="text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white text-xs"
                     >
                       Marcar todo como leído
                     </button>
@@ -368,7 +368,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 </div>
                 
                 {loginNotifications.length === 0 ? (
-                  <p className="text-white/50 text-sm">No hay notificaciones</p>
+                  <p className="text-slate-500 dark:text-white/50 text-sm">No hay notificaciones</p>
                 ) : (
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {loginNotifications.slice(0, 10).map(n => (
@@ -376,14 +376,14 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         key={n.id}
                         onClick={() => markNotificationRead(n.id)}
                         className={`p-2 rounded-lg cursor-pointer transition-colors ${
-                          n.read ? 'bg-white/5 text-white/50' : 'bg-primary/20 text-white'
+                          n.read ? 'bg-slate-200/50 dark:bg-white/5 text-slate-500 dark:text-white/50' : 'bg-primary/20 text-slate-800 dark:text-white'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm">
                             {n.type === 'register' ? '📝' : '🔑'} <strong>{n.username}</strong>
                           </span>
-                          <span className="text-xs text-white/50">
+                          <span className="text-slate-500 dark:text-white/50 text-xs">
                             {new Date(n.timestamp).toLocaleString('es-ES', {
                               day: 'numeric',
                               hour: '2-digit',
@@ -391,7 +391,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                             })}
                           </span>
                         </div>
-                        <p className="text-xs text-white/50">
+                        <p className="text-slate-500 dark:text-white/50 text-xs">
                           {n.type === 'register' ? 'se registró' : 'inició sesión'}
                         </p>
                       </div>
@@ -400,22 +400,22 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 )}
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <h3 className="text-white font-medium mb-3">Fotos en el sistema ({photos.length})</h3>
+              <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+                <h3 className="text-slate-800 dark:text-white font-medium mb-3">Fotos en el sistema ({photos.length})</h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {photos.slice(0, 10).map(p => (
-                    <div key={p.id} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                    <div key={p.id} className="flex items-center gap-2 p-2 bg-slate-200/50 dark:bg-white/5 rounded-lg">
                       <img src={p.imageUrl} alt="" className="w-10 h-10 object-cover rounded" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm truncate">@{p.username}</p>
-                        <p className="text-white/50 text-xs truncate">
+                        <p className="text-slate-700 dark:text-white text-sm truncate">@{p.username}</p>
+                        <p className="text-slate-500 dark:text-white/50 text-xs truncate">
                           {p.description || 'Sin descripción'}
                         </p>
                       </div>
                     </div>
                   ))}
                   {photos.length > 10 && (
-                    <p className="text-white/50 text-xs text-center">
+                    <p className="text-slate-500 dark:text-white/50 text-xs text-center">
                       ...y {photos.length - 10} más
                     </p>
                   )}

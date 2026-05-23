@@ -79,7 +79,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
         {(isOwner || currentUser?.role === 'admin') && (
           <button
             onClick={onDelete}
-            className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+            className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all"
             title="Eliminar foto"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +103,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
             <button
               onClick={() => toggleLike(photo.id)}
               className={`flex items-center gap-1.5 transition-colors ${
-                hasLiked ? 'text-pink-500' : 'text-white/60 hover:text-pink-400'
+                hasLiked ? 'text-pink-500' : 'text-slate-500 dark:text-white/60 hover:text-pink-500 dark:hover:text-pink-400'
               }`}
             >
               <svg
@@ -121,7 +121,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
             <button
               onClick={() => setShowComments(!showComments)}
               className={`flex items-center gap-1.5 transition-colors ${
-                showComments ? 'text-blue-400' : 'text-white/60 hover:text-blue-400'
+                showComments ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500 dark:text-white/60 hover:text-blue-600 dark:hover:text-blue-400'
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +131,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
             </button>
           </div>
 
-          <span className="text-white/40 text-xs">{formatDate(photo.createdAt)}</span>
+          <span className="text-slate-500 dark:text-white/40 text-xs">{formatDate(photo.createdAt)}</span>
         </div>
 
         {showComments && (
@@ -149,7 +149,7 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
                     {(currentUser?.id === comment.userId || currentUser?.role === 'admin') && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
-                        className="text-red-500 hover:text-red-700 opacity-0 group-hover/comment:opacity-100 transition-all ml-2"
+                        className="text-red-500 hover:text-red-700 md:opacity-0 md:group-hover/comment:opacity-100 opacity-100 transition-all ml-2"
                         title="Eliminar comentario"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
