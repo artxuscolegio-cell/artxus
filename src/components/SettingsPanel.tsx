@@ -11,6 +11,14 @@ const gradientOptions = [
   { id: 'slate', value: 'from-slate-700 via-gray-600 to-slate-800', label: 'Gris' },
   { id: 'rainbow', value: 'from-red-500 via-yellow-500 to-green-500', label: 'Arcoíris' },
   { id: 'sunset', value: 'from-orange-500 via-pink-500 to-purple-600', label: 'Atardecer' },
+  { id: 'ocean', value: 'from-cyan-500 via-blue-500 to-indigo-600', label: 'Océano' },
+  { id: 'forest', value: 'from-emerald-500 via-green-600 to-teal-700', label: 'Bosque' },
+  { id: 'berry', value: 'from-fuchsia-600 via-purple-600 to-pink-600', label: 'Frutos Rojos' },
+  { id: 'midnight', value: 'from-blue-900 via-indigo-900 to-slate-900', label: 'Medianoche' },
+  { id: 'peach', value: 'from-red-400 via-orange-400 to-yellow-400', label: 'Melocotón' },
+  { id: 'cyberpunk', value: 'from-yellow-400 via-pink-500 to-purple-600', label: 'Cyberpunk' },
+  { id: 'aurora', value: 'from-green-400 via-cyan-500 to-blue-500', label: 'Aurora' },
+  { id: 'lavender', value: 'from-indigo-300 via-purple-400 to-pink-300', label: 'Lavanda' },
 ];
 
 const colorOptions = [
@@ -22,6 +30,14 @@ const colorOptions = [
   { id: 'red', value: '#ef4444', label: 'Rojo' },
   { id: 'cyan', value: '#06b6d4', label: 'Cian' },
   { id: 'amber', value: '#f59e0b', label: 'Ámbar' },
+  { id: 'emerald', value: '#10b981', label: 'Esmeralda' },
+  { id: 'teal', value: '#14b8a6', label: 'Verde azulado' },
+  { id: 'indigo', value: '#6366f1', label: 'Índigo' },
+  { id: 'fuchsia', value: '#d946ef', label: 'Fucsia' },
+  { id: 'rose', value: '#f43f5e', label: 'Rojo rosa' },
+  { id: 'yellow', value: '#eab308', label: 'Amarillo' },
+  { id: 'sky', value: '#0ea5e9', label: 'Celeste' },
+  { id: 'slate', value: '#64748b', label: 'Pizarra' },
 ];
 
 interface SettingsPanelProps {
@@ -100,12 +116,12 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
               <div>
                 <label className="block text-slate-700 dark:text-white/80 text-sm font-medium mb-3">Color principal</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-8 gap-2">
                   {colorOptions.map(color => (
                     <button
                       key={color.id}
                       onClick={() => updateSettings({ primaryColor: color.value })}
-                      className={`w-full h-10 rounded-lg transition-all ${
+                      className={`w-full h-8 rounded-lg transition-all ${
                         settings.primaryColor === color.value
                           ? 'ring-2 ring-slate-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-slate-800 scale-110 shadow-lg'
                           : 'hover:scale-105'
@@ -119,14 +135,14 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
               <div>
                 <label className="block text-slate-700 dark:text-white/80 text-sm font-medium mb-3">Fondo degradado</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {gradientOptions.map(gradient => (
                     <button
                       key={gradient.id}
                       onClick={() => updateSettings({ backgroundGradient: gradient.value })}
-                      className={`h-12 rounded-lg bg-gradient-to-r ${gradient.value} transition-all ${
+                      className={`h-10 rounded-lg bg-gradient-to-r ${gradient.value} transition-all ${
                         settings.backgroundGradient === gradient.value
-                          ? 'ring-2 ring-slate-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-slate-800 shadow-lg'
+                          ? 'ring-2 ring-slate-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-slate-800 shadow-lg scale-105'
                           : 'opacity-70 hover:opacity-100'
                       }`}
                       title={gradient.label}

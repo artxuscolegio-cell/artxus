@@ -332,10 +332,13 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      clearAllNotifications: () => {
+      clearAllNotifications: async () => {
         set({ loginNotifications: [] });
         try {
-          fb.clearAllNotifications();
+          await fb.clearAllNotifications();
+          // Timeout to ensure any stray subscription events don't repopulate it immediately
+          setTimeout(() => set({ loginNotifications: [] }), 1000);
+          setTimeout(() => set({ loginNotifications: [] }), 3000);
         } catch (e) {
           console.error('Error clearing notifications', e);
         }
