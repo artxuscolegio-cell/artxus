@@ -116,7 +116,18 @@ export const useAppStore = create<AppState>()(
           };
         } else {
           try {
-            await account.createEmailPasswordSession(email, password);
+            try {
+              await account.createEmailPasswordSession(email, password);
+            } catch (err: any) {
+              if (err?.message?.includes('session is active')) {
+                // Si ya hay una sesión activa, la cerramos y volvemos a intentar
+                await account.deleteSession('current');
+                await account.createEmailPasswordSession(email, password);
+              } else {
+                throw err;
+              }
+            }
+            
             const appwriteUser = await account.get();
             user = {
               id: appwriteUser.$id,
