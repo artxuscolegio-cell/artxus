@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import type { LoginNotification } from '../types';
 
+type FilterType = 'all' | 'sessions' | 'uploads' | 'interactions';
+
 export function AdminInbox() {
   const { loginNotifications, clearAllNotifications, markNotificationRead } = useAppStore();
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const getMessage = (notif: LoginNotification) => {
     switch (notif.type) {
@@ -28,7 +32,16 @@ export function AdminInbox() {
       day: 'numeric',
       month: 'short',
     });
+    });
   };
+
+  const filteredNotifications = loginNotifications.filter(notif => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'sessions') return notif.type === 'login' || notif.type === 'register';
+    if (activeFilter === 'uploads') return notif.type === 'upload';
+    if (activeFilter === 'interactions') return notif.type === 'comment' || notif.type === 'like';
+    return true;
+  });
 
   return (
     <div className="glass-card rounded-2xl p-6 bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-white/40 dark:border-white/10 max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
@@ -42,11 +55,54 @@ export function AdminInbox() {
         </button>
       </div>
 
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
+        <button
+          onClick={() => setActiveFilter('all')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+            activeFilter === 'all'
+              ? 'bg-primary text-white'
+              : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
+          }`}
+        >
+          Todas
+        </button>
+        <button
+          onClick={() => setActiveFilter('sessions')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+            activeFilter === 'sessions'
+              ? 'bg-blue-500 text-white'
+              : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
+          }`}
+        >
+          Sesiones
+        </button>
+        <button
+          onClick={() => setActiveFilter('uploads')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+            activeFilter === 'uploads'
+              ? 'bg-green-500 text-white'
+              : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
+          }`}
+        >
+          Fotos
+        </button>
+        <button
+          onClick={() => setActiveFilter('interactions')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+            activeFilter === 'interactions'
+              ? 'bg-pink-500 text-white'
+              : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
+          }`}
+        >
+          Likes y Comentarios
+        </button>
+      </div>
+
       <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar space-y-3">
-        {loginNotifications.length === 0 ? (
-          <p className="text-slate-400 dark:text-white/30 text-sm text-center py-4 italic">No hay notificaciones</p>
+        {filteredNotifications.length === 0 ? (
+          <p className="text-slate-400 dark:text-white/30 text-sm text-center py-4 italic">No hay notificaciones en esta categoría</p>
         ) : (
-          loginNotifications.map(notif => (
+          filteredNotifications.map(notif => (
             <div
               key={notif.id}
               className={`p-3 rounded-xl transition-all cursor-pointer ${
