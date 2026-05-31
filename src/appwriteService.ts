@@ -227,11 +227,10 @@ export async function clearAllNotifications() {
   );
   
   const promises = response.documents.map(doc => 
-    databases.updateDocument(
+    databases.deleteDocument(
       APPWRITE_CONFIG.databaseId,
       APPWRITE_CONFIG.notificationsCollectionId,
-      doc.$id,
-      { read: true }
+      doc.$id
     )
   );
   

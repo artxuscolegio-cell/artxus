@@ -333,13 +333,11 @@ export const useAppStore = create<AppState>()(
       },
 
       clearAllNotifications: () => {
-        const { loginNotifications } = get();
+        set({ loginNotifications: [] });
         try {
           fb.clearAllNotifications();
         } catch (e) {
-          set({
-            loginNotifications: loginNotifications.map(n => ({ ...n, read: true })),
-          });
+          console.error('Error clearing notifications', e);
         }
       },
 
