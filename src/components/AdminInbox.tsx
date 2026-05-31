@@ -32,7 +32,6 @@ export function AdminInbox() {
       day: 'numeric',
       month: 'short',
     });
-    });
   };
 
   const filteredNotifications = loginNotifications.filter(notif => {
