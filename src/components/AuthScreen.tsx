@@ -11,8 +11,11 @@ export function AuthScreen() {
   const [username, setUsername] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [showGuestInfo, setShowGuestInfo] = useState<boolean>(false);
+  const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
+  const [resetEmail, setResetEmail] = useState<string>('');
+  const [resetStatus, setResetStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
-  const { login, register, loginAsGuest, setAuthMode } = useAppStore();
+  const { login, register, loginAsGuest, setAuthMode, resetPassword } = useAppStore();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,6 +35,24 @@ export function AuthScreen() {
       if (!success) {
         setError('El email ya está registrado');
       }
+    }
+  };
+
+  const handlePasswordReset = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+    
+    setResetStatus(null);
+    const success = await resetPassword(resetEmail);
+    if (success) {
+      setResetStatus({ type: 'success', message: 'Te hemos enviado un correo con las instrucciones.' });
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetStatus(null);
+        setResetEmail('');
+      }, 4000);
+    } else {
+      setResetStatus({ type: 'error', message: 'No se pudo enviar el correo de recuperación.' });
     }
   };
 
@@ -88,6 +109,17 @@ export function AuthScreen() {
               className="w-full px-4 py-3 bg-white/60 dark:bg-white/10 border border-slate-300 dark:border-white/20 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
               placeholder="••••••••"
             />
+            {isLogin && (
+              <div className="text-right mt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            )}
           </div>
 
           {error && (
@@ -182,6 +214,60 @@ export function AuthScreen() {
                 Continuar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card animate-in-fast rounded-2xl p-6 bg-white dark:bg-slate-900 max-w-md w-full border border-slate-200 dark:border-white/10 relative">
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Recuperar Contraseña</h3>
+            <p className="text-sm text-slate-600 dark:text-white/70 mb-4">
+              Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+            
+            <form onSubmit={handlePasswordReset}>
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-white/10 border border-slate-300 dark:border-white/20 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm mb-4"
+                placeholder="tu@correo.com"
+                required
+              />
+              
+              {resetStatus && (
+                <p className={`text-sm text-center mb-4 font-medium ${resetStatus.type === 'success' ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {resetStatus.message}
+                </p>
+              )}
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="flex-1 py-2.5 bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white font-semibold rounded-xl hover:bg-slate-300 dark:hover:bg-white/20 transition-all text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all text-sm shadow-md hover:shadow-primary/30"
+                >
+                  Enviar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

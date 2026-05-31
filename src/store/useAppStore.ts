@@ -22,6 +22,8 @@ export interface AppState {
   register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loginAsGuest: () => void;
+  resetPassword: (email: string) => Promise<boolean>;
+  updatePasswordRecovery: (userId: string, secret: string, password: string, passwordAgain: string) => Promise<boolean>;
 
   addPhoto: (imageUrl: string, description?: string) => void;
   deletePhoto: (photoId: string) => void;
@@ -154,7 +156,6 @@ export const useAppStore = create<AppState>()(
 
       register: async (username: string, email: string, password: string) => {
         const { users, loginNotifications } = get();
-        if (users.some(u => u.email === email)) return false;
         
         try {
           const appwriteUser = await account.create(ID.unique(), email, password, username);
@@ -188,6 +189,7 @@ export const useAppStore = create<AppState>()(
           return true;
         } catch (error: any) {
           console.error('Appwrite register error:', error);
+          // Appwrite returns 409 when the email is already registered
           if (error.code === 409) {
             return false;
           }
@@ -212,6 +214,28 @@ export const useAppStore = create<AppState>()(
             createdAt: new Date(),
           },
         });
+      },
+
+      resetPassword: async (email: string) => {
+        try {
+          const url = new URL(window.location.href);
+          url.search = ''; // clear any existing search params
+          await account.createRecovery(email, url.toString());
+          return true;
+        } catch (error) {
+          console.error('Appwrite password reset error:', error);
+          return false;
+        }
+      },
+
+      updatePasswordRecovery: async (userId: string, secret: string, password: string, passwordAgain: string) => {
+        try {
+          await account.updateRecovery(userId, secret, password, passwordAgain);
+          return true;
+        } catch (error) {
+          console.error('Appwrite password recovery update error:', error);
+          return false;
+        }
       },
 
       addPhoto: async (imageUrl: string, description?: string) => {

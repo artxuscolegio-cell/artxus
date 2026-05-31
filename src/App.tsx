@@ -3,6 +3,7 @@ import { useAppStore } from './store/useAppStore';
 import { AccessScreen } from './components/AccessScreen';
 import { AuthScreen } from './components/AuthScreen';
 import { Home } from './pages/Home';
+import { ResetPasswordScreen } from './components/ResetPasswordScreen';
 
 const hexToRgb = (hex: string) => {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -14,9 +15,17 @@ const hexToRgb = (hex: string) => {
 function App() {
   const { authMode, isAuthenticated, initAppwrite, settings } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
+  const [resetData, setResetData] = useState<{userId: string, secret: string} | null>(null);
 
   useEffect(() => {
     initAppwrite();
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    const secret = params.get('secret');
+    if (userId && secret) {
+      setResetData({ userId, secret });
+    }
+
     const timer = setTimeout(() => setShowSplash(false), 3500);
     return () => clearTimeout(timer);
   }, []);
@@ -56,6 +65,19 @@ function App() {
           </text>
         </svg>
       </div>
+    );
+  }
+
+  if (resetData) {
+    return (
+      <ResetPasswordScreen 
+        userId={resetData.userId} 
+        secret={resetData.secret} 
+        onComplete={() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setResetData(null);
+        }} 
+      />
     );
   }
 
