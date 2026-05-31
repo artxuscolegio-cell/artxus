@@ -22,7 +22,7 @@ export function ResetPasswordScreen({ userId, secret, onComplete }: { userId: st
       return;
     }
 
-    const ok = await updatePasswordRecovery(userId, secret, password, passwordAgain);
+    const ok = await updatePasswordRecovery(userId, secret, password);
     if (ok) {
       setSuccess(true);
       setTimeout(() => {

@@ -23,7 +23,7 @@ export interface AppState {
   logout: () => void;
   loginAsGuest: () => void;
   resetPassword: (email: string) => Promise<boolean>;
-  updatePasswordRecovery: (userId: string, secret: string, password: string, passwordAgain: string) => Promise<boolean>;
+  updatePasswordRecovery: (userId: string, secret: string, password: string) => Promise<boolean>;
 
   addPhoto: (imageUrl: string, description?: string) => void;
   deletePhoto: (photoId: string) => void;
@@ -228,9 +228,9 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      updatePasswordRecovery: async (userId: string, secret: string, password: string, passwordAgain: string) => {
+      updatePasswordRecovery: async (userId: string, secret: string, password: string) => {
         try {
-          await account.updateRecovery(userId, secret, password, passwordAgain);
+          await account.updateRecovery(userId, secret, password);
           return true;
         } catch (error) {
           console.error('Appwrite password recovery update error:', error);
