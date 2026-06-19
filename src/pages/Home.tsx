@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Gallery } from '../components/Gallery';
+import { Gallery, PhotoCard } from '../components/Gallery';
 import { UploadModal } from '../components/UploadModal';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { AdminInbox } from '../components/AdminInbox';
@@ -10,6 +10,7 @@ export function Home() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showInbox, setShowInbox] = useState<boolean>(false);
   const [titleAnimation, setTitleAnimation] = useState<boolean>(false);
+  const [pinnedModalPhoto, setPinnedModalPhoto] = useState<string | null>(null);
 
   const { currentUser, isGuest, logout, settings, photos, loginNotifications } = useAppStore();
 
@@ -133,19 +134,29 @@ export function Home() {
             <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/20 shadow-2xl rounded-3xl p-4 overflow-x-auto flex gap-4 custom-scrollbar">
               {photos.filter(p => p.pinned).map(photo => (
                 <div key={`pinned-${photo.id}`} className="flex-none w-48 relative group">
-                  <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border border-white/30 dark:border-white/10">
-                    <img 
-                      src={photo.imageUrl} 
-                      alt={photo.description || 'Dibujo fijado'} 
+                  {/* Thumbnail clickable to open modal */}
+                  <div
+                    onClick={() => setPinnedModalPhoto(photo.id)}
+                    className="aspect-square rounded-2xl overflow-hidden shadow-lg border border-white/30 dark:border-white/10 cursor-pointer"
+                  >
+                    <img
+                      src={photo.imageUrl}
+                      alt={photo.description || 'Dibujo fijado'}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-end p-3 pointer-events-none">
+                  {/* Hover overlay with username + hint */}
+                  <div
+                    onClick={() => setPinnedModalPhoto(photo.id)}
+                    className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex flex-col justify-end p-3 pointer-events-none"
+                  >
                     <p className="text-white text-sm font-medium truncate">@{photo.username}</p>
+                    <p className="text-white/70 text-xs mt-0.5">Ver likes y comentarios →</p>
                   </div>
+                  {/* Unpin button (admin only) */}
                   {currentUser?.role === 'admin' && (
                     <button
-                      onClick={() => useAppStore.getState().togglePinPhoto(photo.id)}
+                      onClick={(e) => { e.stopPropagation(); useAppStore.getState().togglePinPhoto(photo.id); }}
                       className="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600 text-white p-1.5 rounded-full shadow-sm md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all z-10"
                       title="Desfijar foto"
                     >
@@ -159,6 +170,38 @@ export function Home() {
             </div>
           </div>
         )}
+
+        {/* Pinned Photo Modal (full card with likes & comments) */}
+        {pinnedModalPhoto && (() => {
+          const photo = photos.find(p => p.id === pinnedModalPhoto);
+          if (!photo) return null;
+          return (
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setPinnedModalPhoto(null)}
+            >
+              <div
+                className="relative w-full max-w-sm"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setPinnedModalPhoto(null)}
+                  className="absolute -top-10 right-0 text-white/70 hover:text-white z-10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <PhotoCard
+                  photo={photo}
+                  onDelete={() => { useAppStore.getState().deletePhoto(photo.id); setPinnedModalPhoto(null); }}
+                  onImageClick={() => {}}
+                  onTogglePin={() => useAppStore.getState().togglePinPhoto(photo.id)}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Gallery */}
         <Gallery />
