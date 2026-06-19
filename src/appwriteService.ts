@@ -63,6 +63,7 @@ export function subscribeToPhotos(callback: (photos: Photo[]) => void) {
         description: doc.description,
         likes: doc.likes || [],
         createdAt: new Date(doc.createdAt),
+        pinned: doc.pinned || false,
       })) as Photo[];
       
       callback(photos);
@@ -111,6 +112,15 @@ export async function updatePhotoLikes(photoId: string, likes: string[]) {
     APPWRITE_CONFIG.photosCollectionId,
     photoId,
     { likes }
+  );
+}
+
+export async function updatePhotoPinned(photoId: string, pinned: boolean) {
+  await databases.updateDocument(
+    APPWRITE_CONFIG.databaseId,
+    APPWRITE_CONFIG.photosCollectionId,
+    photoId,
+    { pinned }
   );
 }
 
@@ -226,13 +236,17 @@ export async function clearAllNotifications() {
     APPWRITE_CONFIG.notificationsCollectionId
   );
   
-  const promises = response.documents.map(doc => 
-    databases.deleteDocument(
-      APPWRITE_CONFIG.databaseId,
-      APPWRITE_CONFIG.notificationsCollectionId,
-      doc.$id
-    )
-  );
+  const promises = response.documents.map(doc => {
+    if (!doc.read) {
+      return databases.updateDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.notificationsCollectionId,
+        doc.$id,
+        { read: true }
+      );
+    }
+    return Promise.resolve();
+  });
   
   await Promise.all(promises);
 }

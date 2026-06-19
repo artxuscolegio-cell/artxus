@@ -35,6 +35,7 @@ export interface Photo {
   likes: string[];
   createdAt: Date;
   commentCount?: number;
+  pinned?: boolean;
 }
 
 export interface UserSettings {

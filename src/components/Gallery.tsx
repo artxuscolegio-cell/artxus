@@ -3,7 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import type { Photo, Comment } from '../types';
 import * as fb from '../appwriteService';
 
-export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onDelete: () => void; onImageClick: () => void }) {
+export function PhotoCard({ photo, onDelete, onImageClick, onTogglePin }: { photo: Photo; onDelete: () => void; onImageClick: () => void; onTogglePin?: () => void }) {
   const { currentUser, settings, toggleLike, addComment, deleteComment } = useAppStore();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -77,15 +77,32 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
         />
 
         {(isOwner || currentUser?.role === 'admin') && (
-          <button
-            onClick={onDelete}
-            className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all"
-            title="Eliminar foto"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          <div className="absolute top-2 right-2 flex flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all">
+            {currentUser?.role === 'admin' && onTogglePin && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+                className={`p-2 rounded-full shadow-sm backdrop-blur-md transition-all ${
+                  photo.pinned 
+                    ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                    : 'bg-black/40 text-white/80 hover:bg-black/60 hover:text-white'
+                }`}
+                title={photo.pinned ? 'Desfijar foto' : 'Fijar foto'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill={photo.pinned ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full transition-all"
+              title="Eliminar foto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -186,11 +203,13 @@ export function PhotoCard({ photo, onDelete, onImageClick }: { photo: Photo; onD
 }
 
 export function Gallery() {
-  const { photos, settings, deletePhoto } = useAppStore();
+  const { photos, settings, deletePhoto, togglePinPhoto } = useAppStore();
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const sortedPhotos = useMemo(() => {
-    const sorted = [...photos];
+    // Exclude pinned photos from the main gallery
+    const unpinnedPhotos = photos.filter(p => !p.pinned);
+    const sorted = [...unpinnedPhotos];
     switch (settings.sortOrder) {
       case 'newest':
         return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -219,7 +238,7 @@ export function Gallery() {
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
           {sortedPhotos.map(photo => (
             <div key={photo.id} className="mb-4 break-inside-avoid">
-              <PhotoCard photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} />
+              <PhotoCard photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} onTogglePin={() => togglePinPhoto(photo.id)} />
             </div>
           ))}
         </div>
@@ -234,7 +253,7 @@ export function Gallery() {
     return (
       <div className={gridClass}>
         {sortedPhotos.map(photo => (
-          <PhotoCard key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} />
+          <PhotoCard key={photo.id} photo={photo} onDelete={() => deletePhoto(photo.id)} onImageClick={() => setFullscreenImage(photo.imageUrl)} onTogglePin={() => togglePinPhoto(photo.id)} />
         ))}
       </div>
     );

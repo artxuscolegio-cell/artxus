@@ -126,6 +126,40 @@ export function Home() {
           </div>
         </div>
 
+        {/* Pinned Photos (Liquid Glass Effect) */}
+        {photos.filter(p => p.pinned).length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 px-2">Mejores Dibujos</h2>
+            <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/20 shadow-2xl rounded-3xl p-4 overflow-x-auto flex gap-4 custom-scrollbar">
+              {photos.filter(p => p.pinned).map(photo => (
+                <div key={`pinned-${photo.id}`} className="flex-none w-48 relative group">
+                  <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border border-white/30 dark:border-white/10">
+                    <img 
+                      src={photo.imageUrl} 
+                      alt={photo.description || 'Dibujo fijado'} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-end p-3 pointer-events-none">
+                    <p className="text-white text-sm font-medium truncate">@{photo.username}</p>
+                  </div>
+                  {currentUser?.role === 'admin' && (
+                    <button
+                      onClick={() => useAppStore.getState().togglePinPhoto(photo.id)}
+                      className="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600 text-white p-1.5 rounded-full shadow-sm md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all z-10"
+                      title="Desfijar foto"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Gallery */}
         <Gallery />
       </div>

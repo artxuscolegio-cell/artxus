@@ -5,7 +5,7 @@ import type { LoginNotification } from '../types';
 type FilterType = 'all' | 'sessions' | 'uploads' | 'interactions';
 
 export function AdminInbox() {
-  const { loginNotifications, clearAllNotifications, markNotificationRead } = useAppStore();
+  const { loginNotifications, markAllNotificationsRead, markNotificationRead } = useAppStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const getMessage = (notif: LoginNotification) => {
@@ -35,6 +35,7 @@ export function AdminInbox() {
   };
 
   const filteredNotifications = loginNotifications.filter(notif => {
+    if (notif.read) return false;
     if (activeFilter === 'all') return true;
     if (activeFilter === 'sessions') return notif.type === 'login' || notif.type === 'register';
     if (activeFilter === 'uploads') return notif.type === 'upload';
@@ -47,17 +48,17 @@ export function AdminInbox() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white">Bandeja de Entrada</h2>
         <button
-          onClick={clearAllNotifications}
+          onClick={markAllNotificationsRead}
           className="text-xs text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white transition-colors"
         >
-          Limpiar todo
+          Limpiar bandeja
         </button>
       </div>
 
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar items-center">
         <button
           onClick={() => setActiveFilter('all')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+          className={`flex items-center justify-center text-center px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
             activeFilter === 'all'
               ? 'bg-primary text-white'
               : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
@@ -67,7 +68,7 @@ export function AdminInbox() {
         </button>
         <button
           onClick={() => setActiveFilter('sessions')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+          className={`flex items-center justify-center text-center px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
             activeFilter === 'sessions'
               ? 'bg-blue-500 text-white'
               : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
@@ -77,7 +78,7 @@ export function AdminInbox() {
         </button>
         <button
           onClick={() => setActiveFilter('uploads')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+          className={`flex items-center justify-center text-center px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
             activeFilter === 'uploads'
               ? 'bg-green-500 text-white'
               : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'
@@ -87,7 +88,7 @@ export function AdminInbox() {
         </button>
         <button
           onClick={() => setActiveFilter('interactions')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+          className={`flex items-center justify-center text-center px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
             activeFilter === 'interactions'
               ? 'bg-pink-500 text-white'
               : 'bg-white/50 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-white/80 dark:hover:bg-white/20'

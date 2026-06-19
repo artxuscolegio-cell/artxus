@@ -30,11 +30,12 @@ export interface AppState {
   deleteAllPhotos: () => void;
   adminDeletePhoto: (photoId: string) => void;
   toggleLike: (photoId: string) => void;
+  togglePinPhoto: (photoId: string) => void;
   addComment: (photoId: string, text: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
 
   markNotificationRead: (notificationId: string) => void;
-  clearAllNotifications: () => void;
+  markAllNotificationsRead: () => Promise<void>;
 
   updateSettings: (settings: Partial<UserSettings>) => void;
   resetSettings: () => void;
@@ -332,15 +333,45 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      clearAllNotifications: async () => {
-        set({ loginNotifications: [] });
+      markAllNotificationsRead: async () => {
+        const { loginNotifications } = get();
+        // Optimistic update locally
+        set({
+          loginNotifications: loginNotifications.map(n => ({ ...n, read: true }))
+        });
         try {
-          await fb.clearAllNotifications();
-          // Timeout to ensure any stray subscription events don't repopulate it immediately
-          setTimeout(() => set({ loginNotifications: [] }), 1000);
-          setTimeout(() => set({ loginNotifications: [] }), 3000);
+          await fb.clearAllNotifications(); // This now updates them to read: true
         } catch (e) {
-          console.error('Error clearing notifications', e);
+          console.error('Error marking all notifications as read', e);
+        }
+      },
+
+      togglePinPhoto: async (photoId: string) => {
+        const { photos, currentUser } = get();
+        if (currentUser?.role !== 'admin') return;
+
+        const photo = photos.find(p => p.id === photoId);
+        if (!photo) return;
+
+        const newPinnedState = !photo.pinned;
+
+        // Optimistic update
+        set({
+          photos: photos.map(p =>
+            p.id === photoId ? { ...p, pinned: newPinnedState } : p
+          ),
+        });
+
+        try {
+          await fb.updatePhotoPinned(photoId, newPinnedState);
+        } catch (e) {
+          console.error('Error toggling pinned state', e);
+          // Revert optimistic update
+          set({
+            photos: photos.map(p =>
+              p.id === photoId ? { ...p, pinned: !newPinnedState } : p
+            ),
+          });
         }
       },
 

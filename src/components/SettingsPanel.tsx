@@ -366,52 +366,79 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-slate-800 dark:text-white font-medium">
-                    Notificaciones de acceso
-                    {unreadNotifications > 0 && (
-                      <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {unreadNotifications}
-                      </span>
-                    )}
+                    Historial Permanente
                   </h3>
-                  {unreadNotifications > 0 && (
-                    <button
-                      onClick={clearAllNotifications}
-                      className="text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white text-xs"
-                    >
-                      Marcar todo como leído
-                    </button>
-                  )}
                 </div>
                 
                 {loginNotifications.length === 0 ? (
-                  <p className="text-slate-500 dark:text-white/50 text-sm">No hay notificaciones</p>
+                  <p className="text-slate-500 dark:text-white/50 text-sm">No hay registros en el historial</p>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {loginNotifications.slice(0, 10).map(n => (
-                      <div
-                        key={n.id}
-                        onClick={() => markNotificationRead(n.id)}
-                        className={`p-2 rounded-lg cursor-pointer transition-colors ${
-                          n.read ? 'bg-slate-200/50 dark:bg-white/5 text-slate-500 dark:text-white/50' : 'bg-primary/20 text-slate-800 dark:text-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">
-                            {n.type === 'register' ? '📝' : '🔑'} <strong>{n.username}</strong>
-                          </span>
-                          <span className="text-slate-500 dark:text-white/50 text-xs">
-                            {new Date(n.timestamp).toLocaleString('es-ES', {
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-slate-500 dark:text-white/50 text-xs">
-                          {n.type === 'register' ? 'se registró' : 'inició sesión'}
-                        </p>
+                  <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Sesiones */}
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2">Inicios de Sesión y Registro</h4>
+                      <div className="space-y-2">
+                        {loginNotifications.filter(n => n.type === 'login' || n.type === 'register').slice(0, 10).map(n => (
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                {n.type === 'register' ? '📝' : '🔑'} <strong>{n.username}</strong>
+                              </span>
+                              <span className="text-slate-500 dark:text-white/50 text-xs">
+                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <p className="text-slate-500 dark:text-white/50 text-xs">
+                              {n.type === 'register' ? 'se registró en la plataforma' : 'inició sesión'}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Publicaciones */}
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2 mt-4">Publicaciones (Fotos)</h4>
+                      <div className="space-y-2">
+                        {loginNotifications.filter(n => n.type === 'upload').slice(0, 10).map(n => (
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                🖼️ <strong>{n.username}</strong>
+                              </span>
+                              <span className="text-slate-500 dark:text-white/50 text-xs">
+                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <p className="text-slate-500 dark:text-white/50 text-xs">
+                              subió una nueva foto
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Interacciones */}
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2 mt-4">Likes y Comentarios</h4>
+                      <div className="space-y-2">
+                        {loginNotifications.filter(n => n.type === 'like' || n.type === 'comment').slice(0, 10).map(n => (
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                {n.type === 'like' ? '❤️' : '💬'} <strong>{n.username}</strong>
+                              </span>
+                              <span className="text-slate-500 dark:text-white/50 text-xs">
+                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <p className="text-slate-500 dark:text-white/50 text-xs">
+                              {n.type === 'like' ? 'dio like a una foto' : 'comentó en una foto'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
