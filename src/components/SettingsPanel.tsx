@@ -46,7 +46,7 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
-  const { settings, updateSettings, resetSettings, currentUser, photos, deleteAllPhotos, loginNotifications, clearAllNotifications, markNotificationRead } = useAppStore();
+  const { settings, updateSettings, resetSettings, currentUser, photos, deleteAllPhotos, loginNotifications, markAllNotificationsRead, markNotificationRead } = useAppStore();
   const [activeTab, setActiveTab] = useState<'appearance' | 'gallery' | 'privacy' | 'admin'>('appearance');
   const isAdmin = currentUser?.role === 'admin';
 
