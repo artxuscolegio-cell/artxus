@@ -46,7 +46,7 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
-  const { settings, updateSettings, resetSettings, currentUser, photos, deleteAllPhotos, loginNotifications, markAllNotificationsRead, markNotificationRead } = useAppStore();
+  const { settings, updateSettings, resetSettings, currentUser, photos, deleteAllPhotos, deletePhoto, loginNotifications, markAllNotificationsRead, markNotificationRead, deleteNotification } = useAppStore();
   const [activeTab, setActiveTab] = useState<'appearance' | 'gallery' | 'privacy' | 'admin'>('appearance');
   const isAdmin = currentUser?.role === 'admin';
 
@@ -379,14 +379,23 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2">Inicios de Sesión y Registro</h4>
                       <div className="space-y-2">
                         {loginNotifications.filter(n => n.type === 'login' || n.type === 'register').slice(0, 10).map(n => (
-                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors group/item">
                             <div className="flex items-center justify-between">
                               <span className="text-sm">
                                 {n.type === 'register' ? '📝' : '🔑'} <strong>{n.username}</strong>
                               </span>
-                              <span className="text-slate-500 dark:text-white/50 text-xs">
-                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 dark:text-white/50 text-xs">
+                                  {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <button
+                                  onClick={() => deleteNotification(n.id)}
+                                  className="opacity-0 group-hover/item:opacity-100 text-red-400 hover:text-red-600 transition-all"
+                                  title="Eliminar del historial"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </div>
                             </div>
                             <p className="text-slate-500 dark:text-white/50 text-xs">
                               {n.type === 'register' ? 'se registró en la plataforma' : 'inició sesión'}
@@ -401,14 +410,23 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2 mt-4">Publicaciones (Fotos)</h4>
                       <div className="space-y-2">
                         {loginNotifications.filter(n => n.type === 'upload').slice(0, 10).map(n => (
-                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors group/item">
                             <div className="flex items-center justify-between">
                               <span className="text-sm">
                                 🖼️ <strong>{n.username}</strong>
                               </span>
-                              <span className="text-slate-500 dark:text-white/50 text-xs">
-                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 dark:text-white/50 text-xs">
+                                  {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <button
+                                  onClick={() => deleteNotification(n.id)}
+                                  className="opacity-0 group-hover/item:opacity-100 text-red-400 hover:text-red-600 transition-all"
+                                  title="Eliminar del historial"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </div>
                             </div>
                             <p className="text-slate-500 dark:text-white/50 text-xs">
                               subió una nueva foto
@@ -423,14 +441,23 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <h4 className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2 mt-4">Likes y Comentarios</h4>
                       <div className="space-y-2">
                         {loginNotifications.filter(n => n.type === 'like' || n.type === 'comment').slice(0, 10).map(n => (
-                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors">
+                          <div key={n.id} className="p-2 rounded-lg bg-slate-200/50 dark:bg-white/5 text-slate-700 dark:text-white/80 transition-colors group/item">
                             <div className="flex items-center justify-between">
                               <span className="text-sm">
                                 {n.type === 'like' ? '❤️' : '💬'} <strong>{n.username}</strong>
                               </span>
-                              <span className="text-slate-500 dark:text-white/50 text-xs">
-                                {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 dark:text-white/50 text-xs">
+                                  {new Date(n.timestamp).toLocaleString('es-ES', { day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <button
+                                  onClick={() => deleteNotification(n.id)}
+                                  className="opacity-0 group-hover/item:opacity-100 text-red-400 hover:text-red-600 transition-all"
+                                  title="Eliminar del historial"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </div>
                             </div>
                             <p className="text-slate-500 dark:text-white/50 text-xs">
                               {n.type === 'like' ? 'dio like a una foto' : 'comentó en una foto'}
@@ -447,7 +474,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 <h3 className="text-slate-800 dark:text-white font-medium mb-3">Fotos en el sistema ({photos.length})</h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {photos.slice(0, 10).map(p => (
-                    <div key={p.id} className="flex items-center gap-2 p-2 bg-slate-200/50 dark:bg-white/5 rounded-lg">
+                    <div key={p.id} className="flex items-center gap-2 p-2 bg-slate-200/50 dark:bg-white/5 rounded-lg group/photo">
                       <img src={p.imageUrl} alt="" className="w-10 h-10 object-cover rounded" />
                       <div className="flex-1 min-w-0">
                         <p className="text-slate-700 dark:text-white text-sm truncate">@{p.username}</p>
@@ -455,6 +482,19 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           {p.description || 'Sin descripción'}
                         </p>
                       </div>
+                      <button
+                        onClick={() => {
+                          if (confirm(`¿Eliminar la foto de @${p.username}?`)) {
+                            deletePhoto(p.id);
+                          }
+                        }}
+                        className="opacity-0 group-hover/photo:opacity-100 flex-shrink-0 p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded-lg transition-all"
+                        title="Eliminar foto"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
                   {photos.length > 10 && (

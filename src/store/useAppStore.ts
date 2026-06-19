@@ -36,6 +36,7 @@ export interface AppState {
 
   markNotificationRead: (notificationId: string) => void;
   markAllNotificationsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
 
   updateSettings: (settings: Partial<UserSettings>) => void;
   resetSettings: () => void;
@@ -343,6 +344,21 @@ export const useAppStore = create<AppState>()(
           await fb.clearAllNotifications(); // This now updates them to read: true
         } catch (e) {
           console.error('Error marking all notifications as read', e);
+        }
+      },
+
+      deleteNotification: async (notificationId: string) => {
+        const { loginNotifications } = get();
+        // Optimistic: remove from local state immediately
+        set({
+          loginNotifications: loginNotifications.filter(n => n.id !== notificationId),
+        });
+        try {
+          await fb.deleteNotificationFromAppwrite(notificationId);
+        } catch (e) {
+          console.error('Error deleting notification', e);
+          // Revert if cloud delete fails
+          set({ loginNotifications });
         }
       },
 

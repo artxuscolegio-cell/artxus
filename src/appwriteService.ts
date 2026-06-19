@@ -251,6 +251,14 @@ export async function clearAllNotifications() {
   await Promise.all(promises);
 }
 
+export async function deleteNotificationFromAppwrite(notificationId: string) {
+  await databases.deleteDocument(
+    APPWRITE_CONFIG.databaseId,
+    APPWRITE_CONFIG.notificationsCollectionId,
+    notificationId
+  );
+}
+
 export async function deleteAllPhotosFromAppwrite() {
   const response = await databases.listDocuments(
     APPWRITE_CONFIG.databaseId,
