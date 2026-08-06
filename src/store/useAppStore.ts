@@ -15,6 +15,7 @@ export interface AppState {
   loginNotifications: LoginNotification[];
   settings: UserSettings;
   isAppwriteReady: boolean;
+  appwriteStatus: 'checking' | 'online' | 'offline';
 
   setAccessCode: (code: string) => void;
   setAuthMode: (mode: AuthMode) => void;
@@ -26,7 +27,7 @@ export interface AppState {
   resetPasswordDirect: (email: string, newPassword: string) => { success: boolean; error?: string };
   updatePasswordRecovery: (userId: string, secret: string, password: string) => Promise<boolean>;
 
-  addPhoto: (imageUrl: string, description?: string) => void;
+  addPhoto: (imageUrl: string, description?: string) => Promise<void>;
   deletePhoto: (photoId: string) => void;
   deleteAllPhotos: () => void;
   adminDeletePhoto: (photoId: string) => void;
@@ -42,6 +43,7 @@ export interface AppState {
   updateSettings: (settings: Partial<UserSettings>) => void;
   resetSettings: () => void;
   initAppwrite: () => void;
+  retryAppwriteConnection: () => void;
 }
 
 const defaultSettings: UserSettings = {
@@ -65,6 +67,7 @@ const ADMIN_PASSWORD = 'admin123';
 
 let fbUnsubPhotos: (() => void) | null = null;
 let fbUnsubNotifs: (() => void) | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -79,6 +82,7 @@ export const useAppStore = create<AppState>()(
       loginNotifications: [],
       settings: defaultSettings,
       isAppwriteReady: false,
+      appwriteStatus: 'checking' as const,
 
       setAccessCode: (code: string) => {
         if (code.toUpperCase() === ACCESS_CODE) {
@@ -89,19 +93,58 @@ export const useAppStore = create<AppState>()(
       setAuthMode: (mode: AuthMode) => set({ authMode: mode }),
 
       initAppwrite: () => {
-        if (fbUnsubPhotos) return;
-        
-        try {
-          fbUnsubPhotos = fb.subscribeToPhotos((photos) => {
-            set({ photos, isAppwriteReady: true });
-          });
-          
-          fbUnsubNotifs = fb.subscribeToNotifications((notifications) => {
-            set({ loginNotifications: notifications });
-          });
-        } catch (e) {
-          console.log('Appwrite not configured, using localStorage mode');
+        // Cancel any existing retry timer
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
         }
+
+        // Unsubscribe previous listeners before re-subscribing
+        if (fbUnsubPhotos) {
+          try { fbUnsubPhotos(); } catch (_) {}
+          fbUnsubPhotos = null;
+        }
+        if (fbUnsubNotifs) {
+          try { fbUnsubNotifs(); } catch (_) {}
+          fbUnsubNotifs = null;
+        }
+
+        set({ appwriteStatus: 'checking' });
+
+        // Health check first — detect if Appwrite is paused
+        fb.checkAppwriteHealth().then((isOnline) => {
+          if (!isOnline) {
+            set({ appwriteStatus: 'offline', isAppwriteReady: false });
+            // Auto-retry connection every 30 seconds while offline
+            retryTimer = setTimeout(() => {
+              get().initAppwrite();
+            }, 30000);
+            return;
+          }
+
+          // Appwrite is online — subscribe to realtime
+          set({ appwriteStatus: 'online' });
+          try {
+            fbUnsubPhotos = fb.subscribeToPhotos((photos) => {
+              set({ photos, isAppwriteReady: true });
+            });
+            fbUnsubNotifs = fb.subscribeToNotifications((notifications) => {
+              set({ loginNotifications: notifications });
+            });
+          } catch (e) {
+            console.error('Failed to subscribe to Appwrite realtime:', e);
+            set({ appwriteStatus: 'offline' });
+          }
+        }).catch(() => {
+          set({ appwriteStatus: 'offline', isAppwriteReady: false });
+          retryTimer = setTimeout(() => {
+            get().initAppwrite();
+          }, 30000);
+        });
+      },
+
+      retryAppwriteConnection: () => {
+        get().initAppwrite();
       },
 
       login: async (email: string, password: string) => {
@@ -386,6 +429,9 @@ export const useAppStore = create<AppState>()(
           likes: [],
           createdAt: new Date(),
         };
+
+        // Optimistic update: show the photo immediately while uploading to Appwrite
+        set({ photos: [newPhoto, ...photos] });
         
         try {
           await fb.addPhotoToAppwrite({
@@ -396,13 +442,17 @@ export const useAppStore = create<AppState>()(
             likes: [],
           });
           
+          // Appwrite realtime subscription will sync the official list shortly.
+          // No need to manually set state here; subscribeToPhotos callback will fire.
+          
           await fb.addNotificationToAppwrite({
             userId: currentUser.id,
             username: currentUser.username,
             type: 'upload',
           });
         } catch (e) {
-          set({ photos: [newPhoto, ...photos] });
+          // Optimistic update already applied above, keep the local copy on error.
+          console.error('Error uploading photo to Appwrite, keeping local copy:', e);
         }
       },
 
@@ -592,7 +642,8 @@ export const useAppStore = create<AppState>()(
       name: 'artxus-storage',
       partialize: (state) => ({
         users: state.users,
-        photos: state.photos,
+        // photos are NOT persisted: Appwrite is the single source of truth.
+        // Persisting photos caused stale/conflicting data on page reload.
         loginNotifications: state.loginNotifications,
         settings: state.settings,
       }),

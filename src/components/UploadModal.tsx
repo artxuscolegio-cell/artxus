@@ -8,6 +8,7 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFile = useRef<File | null>(null);
 
@@ -33,33 +34,38 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     handleFileSelect(file);
   };
 
+  const resetForm = () => {
+    setImageUrl('');
+    setDescription('');
+    setPreview(null);
+    setUploadError(null);
+    selectedFile.current = null;
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!imageUrl) return;
 
     setUploading(true);
+    setUploadError(null);
     
     try {
       let finalImageUrl = imageUrl;
       
+      // Upload file to Appwrite Storage to get a proper URL
       if (selectedFile.current) {
         finalImageUrl = await uploadImage(selectedFile.current);
       }
       
-      addPhoto(finalImageUrl, description.trim() || undefined);
-      setImageUrl('');
-      setDescription('');
-      setPreview(null);
-      selectedFile.current = null;
+      // Save photo metadata (with Appwrite Storage URL) to Appwrite Database
+      await addPhoto(finalImageUrl, description.trim() || undefined);
+      resetForm();
       onClose();
-    } catch (error) {
-      console.error('Error uploading:', error);
-      addPhoto(imageUrl, description.trim() || undefined);
-      setImageUrl('');
-      setDescription('');
-      setPreview(null);
-      selectedFile.current = null;
-      onClose();
+    } catch (error: any) {
+      console.error('Error uploading to Appwrite Storage/Database:', error);
+      setUploadError(
+        error?.message || 'Error al subir la foto. Verifica tu conexión e inténtalo de nuevo.'
+      );
     } finally {
       setUploading(false);
     }
@@ -72,7 +78,7 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full border border-slate-200 dark:border-white/10 shadow-2xl transition-colors">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Subir Foto</h2>
-          <button onClick={onClose} className="text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors">
+          <button onClick={() => { resetForm(); onClose(); }} className="text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -138,6 +144,12 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <p className="text-amber-400 text-sm text-center">
               ⚠️ Estás subiendo como invitado. ¡Regístrate para guardar tu perfil!
             </p>
+          )}
+
+          {uploadError && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm text-center">
+              ❌ {uploadError}
+            </div>
           )}
 
           <button

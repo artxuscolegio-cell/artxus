@@ -12,7 +12,7 @@ export function Home() {
   const [titleAnimation, setTitleAnimation] = useState<boolean>(false);
   const [pinnedModalPhoto, setPinnedModalPhoto] = useState<string | null>(null);
 
-  const { currentUser, isGuest, logout, settings, photos, loginNotifications } = useAppStore();
+  const { currentUser, isGuest, logout, settings, photos, loginNotifications, appwriteStatus, retryAppwriteConnection } = useAppStore();
 
   useEffect(() => {
     setTitleAnimation(true);
@@ -46,6 +46,38 @@ export function Home() {
   return (
     <div className={`min-h-screen ${backgroundClass} transition-all duration-700`}>
       <div className="container mx-auto px-4 py-8">
+
+        {/* Appwrite Connection Status Banner */}
+        {appwriteStatus === 'checking' && (
+          <div className="mb-4 flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 text-yellow-600 dark:text-yellow-400 text-sm">
+            <svg className="h-4 w-4 animate-spin flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            Conectando con la base de datos...
+          </div>
+        )}
+
+        {appwriteStatus === 'offline' && (
+          <div className="mb-4 flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3 text-red-500 dark:text-red-400 text-sm">
+              <svg className="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              <span>
+                <strong>Appwrite está pausado o sin conexión.</strong>{' '}
+                Las fotos no se pueden cargar ni subir ahora mismo. Se reintenta automáticamente cada 30 segundos.
+              </span>
+            </div>
+            <button
+              onClick={retryAppwriteConnection}
+              className="flex-shrink-0 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-500 dark:text-red-400 text-xs font-semibold rounded-lg transition-all border border-red-500/30"
+            >
+              Reintentar ahora
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <header className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <div className="text-center md:text-left">

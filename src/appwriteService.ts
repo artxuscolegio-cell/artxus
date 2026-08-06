@@ -2,6 +2,38 @@ import { client, databases, storage, APPWRITE_CONFIG, ID, Query } from './appwri
 import imageCompression from 'browser-image-compression';
 import type { Photo, LoginNotification, Comment } from './types';
 
+/**
+ * Pings Appwrite to check if the project is online or paused.
+ * Appwrite Cloud free tier pauses projects after inactivity.
+ * Returns true if Appwrite is reachable, false if paused/offline.
+ */
+export async function checkAppwriteHealth(): Promise<boolean> {
+  try {
+    await databases.listDocuments(
+      APPWRITE_CONFIG.databaseId,
+      APPWRITE_CONFIG.photosCollectionId,
+      [Query.limit(1)]
+    );
+    return true;
+  } catch (error: any) {
+    // Appwrite paused projects return 503 or specific error codes
+    const code = error?.code || error?.status;
+    const message = (error?.message || '').toLowerCase();
+    if (
+      code === 503 ||
+      code === 0 ||
+      message.includes('network') ||
+      message.includes('paused') ||
+      message.includes('failed to fetch') ||
+      message.includes('load failed')
+    ) {
+      return false;
+    }
+    // Other errors (e.g. 401 auth) still mean Appwrite is UP
+    return true;
+  }
+}
+
 export async function uploadImage(file: File): Promise<string> {
   const options = {
     maxSizeMB: 1,
