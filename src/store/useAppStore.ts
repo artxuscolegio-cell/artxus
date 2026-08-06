@@ -486,14 +486,15 @@ export const useAppStore = create<AppState>()(
 
       togglePinPhoto: async (photoId: string) => {
         const { photos, currentUser } = get();
-        if (currentUser?.role !== 'admin') return;
+        if (!currentUser) return;
 
         const photo = photos.find(p => p.id === photoId);
         if (!photo) return;
 
+        if (photo.userId !== currentUser.id && currentUser.role !== 'admin') return;
+
         const newPinnedState = !photo.pinned;
 
-        // Optimistic update
         set({
           photos: photos.map(p =>
             p.id === photoId ? { ...p, pinned: newPinnedState } : p
@@ -504,12 +505,6 @@ export const useAppStore = create<AppState>()(
           await fb.updatePhotoPinned(photoId, newPinnedState);
         } catch (e) {
           console.error('Error toggling pinned state', e);
-          // Revert optimistic update
-          set({
-            photos: photos.map(p =>
-              p.id === photoId ? { ...p, pinned: !newPinnedState } : p
-            ),
-          });
         }
       },
 

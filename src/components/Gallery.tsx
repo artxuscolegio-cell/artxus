@@ -78,7 +78,7 @@ export function PhotoCard({ photo, onDelete, onImageClick, onTogglePin }: { phot
 
         {(isOwner || currentUser?.role === 'admin') && (
           <div className="absolute top-2 right-2 flex flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all">
-            {currentUser?.role === 'admin' && onTogglePin && (
+            {onTogglePin && (
               <button
                 onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
                 className={`p-2 rounded-full shadow-sm backdrop-blur-md transition-all ${
@@ -86,7 +86,7 @@ export function PhotoCard({ photo, onDelete, onImageClick, onTogglePin }: { phot
                     ? 'bg-amber-500 text-white hover:bg-amber-600' 
                     : 'bg-black/40 text-white/80 hover:bg-black/60 hover:text-white'
                 }`}
-                title={photo.pinned ? 'Desfijar foto' : 'Fijar foto'}
+                title={photo.pinned ? 'Desfijar foto' : 'Fijar foto como favorita'}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill={photo.pinned ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
