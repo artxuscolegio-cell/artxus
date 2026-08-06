@@ -491,7 +491,7 @@ export const useAppStore = create<AppState>()(
         const photo = photos.find(p => p.id === photoId);
         if (!photo) return;
 
-        if (photo.userId !== currentUser.id && currentUser.role !== 'admin') return;
+        if (currentUser.role !== 'admin') return;
 
         const newPinnedState = !photo.pinned;
 
