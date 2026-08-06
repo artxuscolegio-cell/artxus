@@ -18,11 +18,12 @@ export interface AppState {
 
   setAccessCode: (code: string) => void;
   setAuthMode: (mode: AuthMode) => void;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (username: string, email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   loginAsGuest: () => void;
-  resetPassword: (email: string) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string; type?: 'appwrite' | 'local'; code?: string }>;
+  resetPasswordDirect: (email: string, newPassword: string) => { success: boolean; error?: string };
   updatePasswordRecovery: (userId: string, secret: string, password: string) => Promise<boolean>;
 
   addPhoto: (imageUrl: string, description?: string) => void;
@@ -104,10 +105,17 @@ export const useAppStore = create<AppState>()(
       },
 
       login: async (email: string, password: string) => {
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPassword = password.trim();
+
+        if (!cleanEmail || !cleanPassword) {
+          return { success: false, error: 'Por favor ingresa tu correo y contraseña' };
+        }
+
         const { users, loginNotifications } = get();
         let user: User | undefined;
         
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        if (cleanEmail === ADMIN_EMAIL.toLowerCase() && cleanPassword === ADMIN_PASSWORD) {
           user = {
             id: 'admin',
             username: 'Administrador',
@@ -119,12 +127,11 @@ export const useAppStore = create<AppState>()(
         } else {
           try {
             try {
-              await account.createEmailPasswordSession(email, password);
+              await account.createEmailPasswordSession(cleanEmail, cleanPassword);
             } catch (err: any) {
-              if (err?.message?.includes('session is active')) {
-                // Si ya hay una sesión activa, la cerramos y volvemos a intentar
-                await account.deleteSession('current');
-                await account.createEmailPasswordSession(email, password);
+              if (err?.message?.includes('session is active') || err?.code === 409) {
+                await account.deleteSession('current').catch(() => {});
+                await account.createEmailPasswordSession(cleanEmail, cleanPassword);
               } else {
                 throw err;
               }
@@ -135,13 +142,22 @@ export const useAppStore = create<AppState>()(
               id: appwriteUser.$id,
               username: appwriteUser.name,
               email: appwriteUser.email,
-              password: password,
+              password: cleanPassword,
               role: 'user',
               createdAt: new Date(appwriteUser.$createdAt),
             };
-          } catch (error) {
-            console.error('Appwrite login error:', error);
-            user = users.find(u => u.email === email && u.password === password);
+
+            const existingIndex = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+            let updatedUsers = [...users];
+            if (existingIndex >= 0) {
+              updatedUsers[existingIndex] = user;
+            } else {
+              updatedUsers.push(user);
+            }
+            set({ users: updatedUsers });
+          } catch (error: any) {
+            console.log('Appwrite login error/fallback to local:', error?.message || error);
+            user = users.find(u => u.email.toLowerCase() === cleanEmail && u.password === cleanPassword);
           }
         }
         
@@ -162,27 +178,65 @@ export const useAppStore = create<AppState>()(
           } catch (e) {
             set({ loginNotifications: [newNotification, ...loginNotifications] });
           }
-          return true;
+          return { success: true };
         }
-        return false;
+        
+        return { success: false, error: 'Correo electrónico o contraseña incorrectos' };
       },
 
       register: async (username: string, email: string, password: string) => {
+        const cleanUsername = username.trim();
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPassword = password.trim();
+
+        if (!cleanUsername || !cleanEmail || !cleanPassword) {
+          return { success: false, error: 'Todos los campos son requeridos' };
+        }
+
+        if (cleanPassword.length < 6) {
+          return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
+        }
+
         const { users, loginNotifications } = get();
         
+        if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
+          return { success: false, error: 'El correo electrónico ya está registrado' };
+        }
+
+        let newUser: User | null = null;
+        let isAppwriteSuccess = false;
+        
         try {
-          const appwriteUser = await account.create(ID.unique(), email, password, username);
-          await account.createEmailPasswordSession(email, password);
+          const appwriteUser = await account.create(ID.unique(), cleanEmail, cleanPassword, cleanUsername);
+          await account.createEmailPasswordSession(cleanEmail, cleanPassword).catch(() => {});
           
-          const newUser: User = {
+          newUser = {
             id: appwriteUser.$id,
             username: appwriteUser.name,
             email: appwriteUser.email,
-            password: password,
+            password: cleanPassword,
             role: 'user',
             createdAt: new Date(appwriteUser.$createdAt),
           };
+          isAppwriteSuccess = true;
+        } catch (error: any) {
+          console.log('Appwrite register error/fallback:', error?.message || error);
+          if (error?.code === 409) {
+            return { success: false, error: 'El correo electrónico ya está registrado' };
+          }
           
+          // Fallback to local user registration if Appwrite server is paused, offline, or rejected
+          newUser = {
+            id: 'user_' + Date.now(),
+            username: cleanUsername,
+            email: cleanEmail,
+            password: cleanPassword,
+            role: 'user',
+            createdAt: new Date(),
+          };
+        }
+        
+        if (newUser) {
           set({ users: [...users, newUser], currentUser: newUser, isAuthenticated: true, isGuest: false });
           
           const newNotification: LoginNotification = {
@@ -194,23 +248,23 @@ export const useAppStore = create<AppState>()(
             read: false,
           };
           
-          try {
-            fb.addNotificationToAppwrite({ userId: newUser.id, username: newUser.username, type: 'register' });
-          } catch (e) {
+          if (isAppwriteSuccess) {
+            try {
+              fb.addNotificationToAppwrite({ userId: newUser.id, username: newUser.username, type: 'register' });
+            } catch (e) {
+              set({ loginNotifications: [newNotification, ...loginNotifications] });
+            }
+          } else {
             set({ loginNotifications: [newNotification, ...loginNotifications] });
           }
-          return true;
-        } catch (error: any) {
-          console.error('Appwrite register error:', error);
-          // Appwrite returns 409 when the email is already registered
-          if (error.code === 409) {
-            return false;
-          }
-          return false;
+          return { success: true };
         }
+
+        return { success: false, error: 'No se pudo crear la cuenta. Intenta nuevamente.' };
       },
 
       logout: () => {
+        account.deleteSession('current').catch(() => {});
         set({ currentUser: null, isAuthenticated: false, isGuest: false, authMode: 'login' });
       },
 
@@ -230,25 +284,93 @@ export const useAppStore = create<AppState>()(
       },
 
       resetPassword: async (email: string) => {
+        const cleanEmail = email.trim().toLowerCase();
+        if (!cleanEmail) {
+          return { success: false, error: 'Por favor ingresa tu correo electrónico' };
+        }
+
+        const { users } = get();
+        const localUser = users.find(u => u.email.toLowerCase() === cleanEmail);
+
         try {
           const url = new URL(window.location.href);
-          url.search = ''; // clear any existing search params
-          await account.createRecovery(email, url.toString());
-          return true;
-        } catch (error) {
-          console.error('Appwrite password reset error:', error);
-          return false;
+          url.search = '';
+          await account.createRecovery(cleanEmail, url.toString());
+          return {
+            success: true,
+            type: 'appwrite',
+            message: 'Te hemos enviado un correo con las instrucciones y el enlace de recuperación.'
+          };
+        } catch (error: any) {
+          console.log('Appwrite password reset error/fallback:', error?.message || error);
+          
+          if (localUser) {
+            const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+            return {
+              success: true,
+              type: 'local',
+              code: recoveryCode,
+              message: `Código de recuperación generado: ${recoveryCode}`,
+            };
+          }
+
+          return {
+            success: false,
+            error: 'No se encontró ninguna cuenta registrada con este correo electrónico.'
+          };
         }
       },
 
+      resetPasswordDirect: (email: string, newPassword: string) => {
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPassword = newPassword.trim();
+        if (cleanPassword.length < 6) {
+          return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
+        }
+
+        const { users } = get();
+        const userIndex = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+
+        if (userIndex >= 0) {
+          const updatedUsers = [...users];
+          updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: cleanPassword };
+          set({ users: updatedUsers });
+          return { success: true };
+        }
+
+        const newUser: User = {
+          id: 'user_' + Date.now(),
+          username: cleanEmail.split('@')[0],
+          email: cleanEmail,
+          password: cleanPassword,
+          role: 'user',
+          createdAt: new Date(),
+        };
+        set({ users: [...users, newUser] });
+        return { success: true };
+      },
+
       updatePasswordRecovery: async (userId: string, secret: string, password: string) => {
+        const cleanPassword = password.trim();
+        const { users } = get();
+
+        let appwriteSuccess = false;
         try {
-          await account.updateRecovery(userId, secret, password);
-          return true;
+          await account.updateRecovery(userId, secret, cleanPassword);
+          appwriteSuccess = true;
         } catch (error) {
           console.error('Appwrite password recovery update error:', error);
-          return false;
         }
+
+        const userIndex = users.findIndex(u => u.id === userId);
+        if (userIndex >= 0) {
+          const updatedUsers = [...users];
+          updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: cleanPassword };
+          set({ users: updatedUsers });
+          return true;
+        }
+
+        return appwriteSuccess;
       },
 
       addPhoto: async (imageUrl: string, description?: string) => {
