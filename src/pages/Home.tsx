@@ -4,11 +4,14 @@ import { Gallery, PhotoCard } from '../components/Gallery';
 import { UploadModal } from '../components/UploadModal';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { AdminInbox } from '../components/AdminInbox';
+import { NotificationBell } from '../components/NotificationBell';
+import { AdminModerationPanel } from '../components/AdminModerationPanel';
 
 export function Home() {
   const [showUpload, setShowUpload] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showInbox, setShowInbox] = useState<boolean>(false);
+  const [showModeration, setShowModeration] = useState<boolean>(false);
   const [titleAnimation, setTitleAnimation] = useState<boolean>(false);
   const [pinnedModalPhoto, setPinnedModalPhoto] = useState<string | null>(null);
 
@@ -95,21 +98,41 @@ export function Home() {
 
           <div className="flex items-center gap-3">
             {currentUser?.role === 'admin' && (
-              <button
-                onClick={() => setShowInbox(true)}
-                className="p-3 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 rounded-xl transition-all text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white shadow-sm relative"
-                title="Bandeja de Entrada"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                {loginNotifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                    {loginNotifications.filter(n => !n.read).length}
-                  </span>
-                )}
-              </button>
+              <>
+                <button
+                  onClick={() => setShowInbox(true)}
+                  className="p-3 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 rounded-xl transition-all text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white shadow-sm relative"
+                  title="Bandeja de Entrada"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {loginNotifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                      {loginNotifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </button>
+                {/* Moderation button — shows count of pending photos */}
+                <button
+                  onClick={() => setShowModeration(true)}
+                  className="p-3 bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 rounded-xl transition-all text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white shadow-sm relative"
+                  title="Moderar fotos pendientes"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  {photos.filter(p => p.status === 'pending' || !p.status).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
+                      {photos.filter(p => p.status === 'pending' || !p.status).length}
+                    </span>
+                  )}
+                </button>
+              </>
             )}
+
+            {/* Notification bell — visible to all logged-in users */}
+            <NotificationBell />
 
             <button
               onClick={() => setShowSettings(true)}
@@ -243,6 +266,11 @@ export function Home() {
       <UploadModal isOpen={showUpload} onClose={() => setShowUpload(false)} />
       <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
       
+      {/* Moderation Panel (admin only) */}
+      {showModeration && (
+        <AdminModerationPanel onClose={() => setShowModeration(false)} />
+      )}
+
       {/* Inbox Modal */}
       {showInbox && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

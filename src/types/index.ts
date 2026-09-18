@@ -36,6 +36,19 @@ export interface Photo {
   createdAt: Date;
   commentCount?: number;
   pinned?: boolean;
+  status?: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  toUserId: string;
+  fromUsername: string;
+  type: 'comment' | 'moderation' | 'like';
+  message: string;
+  photoId?: string;
+  read: boolean;
+  createdAt: Date;
 }
 
 export interface UserSettings {

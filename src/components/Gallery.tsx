@@ -203,13 +203,23 @@ export function PhotoCard({ photo, onDelete, onImageClick, onTogglePin }: { phot
 }
 
 export function Gallery() {
-  const { photos, settings, deletePhoto, togglePinPhoto } = useAppStore();
+  const { photos, settings, deletePhoto, togglePinPhoto, currentUser } = useAppStore();
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const sortedPhotos = useMemo(() => {
     // Exclude pinned photos from the main gallery
     const unpinnedPhotos = photos.filter(p => !p.pinned);
-    const sorted = [...unpinnedPhotos];
+
+    // Visibility: admins see all. Regular users only see approved photos
+    // (or their own pending/rejected ones so they know the status).
+    const visiblePhotos = unpinnedPhotos.filter(p => {
+      if (!p.status || p.status === 'approved') return true;
+      if (currentUser?.role === 'admin') return true;
+      if (p.status === 'pending' && p.userId === currentUser?.id) return true;
+      return false;
+    });
+
+    const sorted = [...visiblePhotos];
     switch (settings.sortOrder) {
       case 'newest':
         return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -220,7 +230,7 @@ export function Gallery() {
       default:
         return sorted;
     }
-  }, [photos, settings.sortOrder]);
+  }, [photos, settings.sortOrder, currentUser]);
 
   if (photos.length === 0) {
     return (

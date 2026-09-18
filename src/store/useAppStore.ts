@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { User, Photo, UserSettings, AuthMode, LoginNotification } from '../types';
 import * as fb from '../appwriteService';
 import { account, ID } from '../appwrite';
+import { registerServiceWorker, sendAdminPushNotification } from '../services/pushNotificationService';
 
 export interface AppState {
   currentUser: User | null;
@@ -135,6 +136,9 @@ export const useAppStore = create<AppState>()(
             console.error('Failed to subscribe to Appwrite realtime:', e);
             set({ appwriteStatus: 'offline' });
           }
+
+          // Register Service Worker for push notifications
+          registerServiceWorker().catch(console.error);
         }).catch(() => {
           set({ appwriteStatus: 'offline', isAppwriteReady: false });
           retryTimer = setTimeout(() => {
@@ -419,37 +423,51 @@ export const useAppStore = create<AppState>()(
       addPhoto: async (imageUrl: string, description?: string) => {
         const { currentUser, photos } = get();
         if (!currentUser) return;
-        
+
+        const tempId = crypto.randomUUID();
         const newPhoto: Photo = {
-          id: crypto.randomUUID(),
+          id: tempId,
           userId: currentUser.id,
           username: currentUser.username,
           imageUrl,
           description,
           likes: [],
           createdAt: new Date(),
+          status: 'pending',
         };
 
         // Optimistic update: show the photo immediately while uploading to Appwrite
         set({ photos: [newPhoto, ...photos] });
-        
+
         try {
-          await fb.addPhotoToAppwrite({
+          // Capture the real Appwrite document ID so we can reference it in the
+          // push notification action buttons (✅ Aprobar / 🚫 Rechazar).
+          const realPhotoId = await fb.addPhotoToAppwrite({
             userId: currentUser.id,
             username: currentUser.username,
             imageUrl,
             description,
             likes: [],
+            status: 'pending',
           });
-          
+
           // Appwrite realtime subscription will sync the official list shortly.
           // No need to manually set state here; subscribeToPhotos callback will fire.
-          
+
           await fb.addNotificationToAppwrite({
             userId: currentUser.id,
             username: currentUser.username,
             type: 'upload',
           });
+
+          // Send push notification to admin (via ntfy.sh) with Aprobar/Rechazar buttons.
+          // The buttons call /api/moderate?action=...&photoId=...&token=... on Vercel.
+          sendAdminPushNotification({
+            title: '🎨 Nueva foto pendiente — Artxus',
+            body: `@${currentUser.username} subió una foto${description ? ': ' + description.slice(0, 60) : ''}. Tocá para moderar.`,
+            url: window.location.origin,
+            photoId: realPhotoId,
+          }).catch(console.error);
         } catch (e) {
           // Optimistic update already applied above, keep the local copy on error.
           console.error('Error uploading photo to Appwrite, keeping local copy:', e);
@@ -597,8 +615,12 @@ export const useAppStore = create<AppState>()(
       },
 
       addComment: async (photoId: string, text: string) => {
-        const { currentUser } = get();
+        const { currentUser, photos } = get();
         if (!currentUser) return;
+
+        // Find the photo author to notify them
+        const photo = photos.find(p => p.id === photoId);
+        const photoAuthorId = photo?.userId;
 
         try {
           await fb.addComment({
@@ -606,7 +628,7 @@ export const useAppStore = create<AppState>()(
             userId: currentUser.id,
             username: currentUser.username,
             text
-          });
+          }, photoAuthorId);
           
           await fb.addNotificationToAppwrite({
             userId: currentUser.id,

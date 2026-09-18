@@ -1,6 +1,6 @@
 import { client, databases, storage, APPWRITE_CONFIG, ID, Query } from './appwrite';
 import imageCompression from 'browser-image-compression';
-import type { Photo, LoginNotification, Comment } from './types';
+import type { Photo, LoginNotification, Comment, AppNotification } from './types';
 
 /**
  * Pings Appwrite to check if the project is online or paused.
@@ -96,6 +96,8 @@ export function subscribeToPhotos(callback: (photos: Photo[]) => void) {
         likes: doc.likes || [],
         createdAt: new Date(doc.createdAt),
         pinned: doc.pinned || false,
+        status: doc.status || 'approved',
+        rejectionReason: doc.rejectionReason || '',
       })) as Photo[];
       
       callback(photos);
@@ -124,10 +126,20 @@ export async function addPhotoToAppwrite(photo: Omit<Photo, 'id' | 'createdAt'>)
       imageUrl: photo.imageUrl,
       description: photo.description || '',
       likes: photo.likes || [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      status: photo.status || 'pending',
     }
   );
   return doc.$id;
+}
+
+export async function updatePhotoStatus(photoId: string, status: 'approved' | 'rejected', rejectionReason?: string) {
+  await databases.updateDocument(
+    APPWRITE_CONFIG.databaseId,
+    APPWRITE_CONFIG.photosCollectionId,
+    photoId,
+    { status, rejectionReason: rejectionReason || '' }
+  );
 }
 
 export async function deletePhotoFromAppwrite(photoId: string) {
@@ -204,7 +216,10 @@ export async function addNotificationToAppwrite(notification: Omit<LoginNotifica
   );
 }
 
-export async function addComment(comment: Omit<Comment, 'id' | 'createdAt'>) {
+export async function addComment(
+  comment: Omit<Comment, 'id' | 'createdAt'>,
+  photoAuthorId?: string
+) {
   await databases.createDocument(
     APPWRITE_CONFIG.databaseId,
     APPWRITE_CONFIG.commentsCollectionId,
@@ -214,6 +229,17 @@ export async function addComment(comment: Omit<Comment, 'id' | 'createdAt'>) {
       createdAt: new Date().toISOString(),
     }
   );
+
+  // Notify the photo author (only if the commenter is not the author)
+  if (photoAuthorId && photoAuthorId !== comment.userId) {
+    await createAppNotification({
+      toUserId: photoAuthorId,
+      fromUsername: comment.username,
+      type: 'comment',
+      message: `@${comment.username} comentó tu foto`,
+      photoId: comment.photoId,
+    });
+  }
 }
 
 export async function getComments(photoId: string): Promise<Comment[]> {
@@ -311,3 +337,79 @@ export async function deleteAllPhotosFromAppwrite() {
 export const isAppwriteConfigured = () => {
   return APPWRITE_CONFIG.databaseId && APPWRITE_CONFIG.bucketId;
 };
+
+// ── APP NOTIFICATIONS (comment / moderation) ────────────────────────────────
+
+export async function createAppNotification(
+  data: Omit<AppNotification, 'id' | 'createdAt' | 'read'>
+) {
+  try {
+    await databases.createDocument(
+      APPWRITE_CONFIG.databaseId,
+      APPWRITE_CONFIG.appNotificationsCollectionId,
+      ID.unique(),
+      {
+        toUserId: data.toUserId,
+        fromUsername: data.fromUsername,
+        type: data.type,
+        message: data.message,
+        photoId: data.photoId || '',
+        read: false,
+        createdAt: new Date().toISOString(),
+      }
+    );
+  } catch (e) {
+    console.error('Error creating app notification:', e);
+  }
+}
+
+export async function getUserAppNotifications(userId: string): Promise<AppNotification[]> {
+  const response = await databases.listDocuments(
+    APPWRITE_CONFIG.databaseId,
+    APPWRITE_CONFIG.appNotificationsCollectionId,
+    [Query.equal('toUserId', userId), Query.orderDesc('createdAt'), Query.limit(50)]
+  );
+
+  return response.documents.map(doc => ({
+    id: doc.$id,
+    toUserId: doc.toUserId,
+    fromUsername: doc.fromUsername,
+    type: doc.type,
+    message: doc.message,
+    photoId: doc.photoId,
+    read: doc.read,
+    createdAt: new Date(doc.createdAt),
+  })) as AppNotification[];
+}
+
+export async function markAppNotificationRead(notificationId: string) {
+  try {
+    await databases.updateDocument(
+      APPWRITE_CONFIG.databaseId,
+      APPWRITE_CONFIG.appNotificationsCollectionId,
+      notificationId,
+      { read: true }
+    );
+  } catch (e) {
+    console.error('Error marking app notification read:', e);
+  }
+}
+
+export function subscribeToAppNotifications(
+  userId: string,
+  callback: (notifications: AppNotification[]) => void
+) {
+  const fetch = () => getUserAppNotifications(userId).then(callback).catch(console.error);
+  fetch();
+  const unsub = client.subscribe(
+    `databases.${APPWRITE_CONFIG.databaseId}.collections.${APPWRITE_CONFIG.appNotificationsCollectionId}.documents`,
+    (event) => {
+      // Only re-fetch if the document is for this user
+      const payload = event.payload as any;
+      if (!payload?.toUserId || payload.toUserId === userId) {
+        fetch();
+      }
+    }
+  );
+  return unsub;
+}

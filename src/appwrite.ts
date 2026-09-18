@@ -18,6 +18,7 @@ export const APPWRITE_CONFIG = {
     photosCollectionId: import.meta.env.VITE_APPWRITE_PHOTOS_COLLECTION_ID || 'photos',
     notificationsCollectionId: import.meta.env.VITE_APPWRITE_NOTIFICATIONS_COLLECTION_ID || 'notifications',
     commentsCollectionId: import.meta.env.VITE_APPWRITE_COMMENTS_COLLECTION_ID || 'comments',
+    appNotificationsCollectionId: import.meta.env.VITE_APPWRITE_APP_NOTIFICATIONS_COLLECTION_ID || 'app_notifications',
     bucketId: import.meta.env.VITE_APPWRITE_BUCKET_ID || 'photos_bucket'
 };
 
