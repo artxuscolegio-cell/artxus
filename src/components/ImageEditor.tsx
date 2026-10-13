@@ -15,7 +15,10 @@ async function getCroppedImg(
   rotation: number = 0,
   fileName: string = 'edited.jpg'
 ): Promise<File> {
-  const image = await createImageBitmap(await (await fetch(imageSrc)).blob());
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => { image.onload = resolve; });
+
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
@@ -24,30 +27,29 @@ async function getCroppedImg(
   const cos = Math.abs(Math.cos(radians));
 
   // Canvas size to hold the rotated image
-  const rotatedWidth = image.width * cos + image.height * sin;
+  const rotatedWidth  = image.width * cos + image.height * sin;
   const rotatedHeight = image.width * sin + image.height * cos;
 
-  canvas.width = pixelCrop.width;
+  canvas.width  = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // Use an offscreen canvas to rotate the full image first
+  // Offscreen canvas: rotate full image
   const offscreen = document.createElement('canvas');
-  offscreen.width = rotatedWidth;
+  offscreen.width  = rotatedWidth;
   offscreen.height = rotatedHeight;
   const offCtx = offscreen.getContext('2d')!;
   offCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
   offCtx.rotate(radians);
   offCtx.drawImage(image, -image.width / 2, -image.height / 2);
 
-  // Then crop from the rotated image
+  // Crop from the rotated image
   ctx.drawImage(
     offscreen,
-    pixelCrop.x + (rotatedWidth - image.width * cos - image.height * sin) / 2,
-    pixelCrop.y + (rotatedHeight - image.width * sin - image.height * cos) / 2,
+    pixelCrop.x + (rotatedWidth  - image.width  * cos - image.height * sin) / 2,
+    pixelCrop.y + (rotatedHeight - image.width  * sin - image.height * cos) / 2,
     pixelCrop.width,
     pixelCrop.height,
-    0,
-    0,
+    0, 0,
     pixelCrop.width,
     pixelCrop.height
   );
@@ -61,19 +63,20 @@ async function getCroppedImg(
 }
 
 const ASPECT_OPTIONS = [
-  { label: 'Libre', value: undefined },
-  { label: '1:1', value: 1 },
-  { label: '4:3', value: 4 / 3 },
-  { label: '16:9', value: 16 / 9 },
+  { label: 'Original', value: undefined },
+  { label: '1:1',      value: 1 },
+  { label: '4:3',      value: 4 / 3 },
+  { label: '3:4',      value: 3 / 4 },
+  { label: '16:9',     value: 16 / 9 },
 ];
 
 export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: ImageEditorProps) {
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
+  const [crop, setCrop]                         = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom]                         = useState(1);
+  const [rotation, setRotation]                 = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [aspect, setAspect] = useState<number | undefined>(undefined);
-  const [applying, setApplying] = useState(false);
+  const [aspect, setAspect]                     = useState<number | undefined>(undefined);
+  const [applying, setApplying]                 = useState(false);
 
   const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);
@@ -87,7 +90,12 @@ export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: I
     if (!croppedAreaPixels) return;
     setApplying(true);
     try {
-      const file = await getCroppedImg(imageSrc, croppedAreaPixels, rotation, originalFileName || 'edited.jpg');
+      const file = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        rotation,
+        originalFileName || 'edited.jpg'
+      );
       onApply(file);
     } catch (e) {
       console.error('Error applying crop:', e);
@@ -98,20 +106,24 @@ export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: I
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Cropper area */}
-      <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{ height: 280 }}>
+      {/* Cropper area
+          KEY FIX: objectFit="contain" makes the crop box move instead of the image.
+          The image stays still and the selection area is what the user drags.
+      */}
+      <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{ height: 300 }}>
         <Cropper
           image={imageSrc}
           crop={crop}
           zoom={zoom}
           rotation={rotation}
           aspect={aspect}
+          objectFit="contain"
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}
           style={{
             containerStyle: { borderRadius: '1rem' },
-            cropAreaStyle: { borderColor: 'rgba(139,92,246,0.8)' },
+            cropAreaStyle:  { borderColor: 'rgba(139,92,246,0.9)', borderWidth: 2 },
           }}
         />
       </div>
@@ -120,7 +132,7 @@ export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: I
       <div className="flex flex-col gap-2 px-1">
         {/* Zoom */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-500 dark:text-white/50 w-8">🔍</span>
+          <span className="text-xs text-slate-500 dark:text-white/50 w-6">🔍</span>
           <input
             type="range"
             min={1}
@@ -130,7 +142,9 @@ export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: I
             onChange={(e) => setZoom(Number(e.target.value))}
             className="flex-1 accent-primary"
           />
-          <span className="text-xs text-slate-500 dark:text-white/50 w-8 text-right">{zoom.toFixed(1)}x</span>
+          <span className="text-xs text-slate-500 dark:text-white/50 w-10 text-right">
+            {zoom.toFixed(1)}x
+          </span>
         </div>
 
         {/* Rotation */}
@@ -188,7 +202,7 @@ export function ImageEditor({ imageSrc, onApply, onCancel, originalFileName }: I
           disabled={applying}
           className="flex-1 py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-60 shadow-lg hover:shadow-primary/40"
         >
-          {applying ? 'Aplicando...' : '✓ Aplicar'}
+          {applying ? 'Aplicando...' : '✓ Aplicar recorte'}
         </button>
       </div>
     </div>

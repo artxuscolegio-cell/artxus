@@ -23,9 +23,10 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
       const result = e.target?.result as string;
-      setEditorSrc(result);
-      setShowEditor(true);
-      setPreview(null);
+      // ── CHANGE: skip editor automatically, show preview directly ──
+      setPreview(result);
+      setEditorSrc(result);   // keep editorSrc ready in case the user wants to edit later
+      setShowEditor(false);
     };
     reader.readAsDataURL(file);
   };
@@ -41,18 +42,13 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
       setPreview(e.target?.result as string);
+      setEditorSrc(e.target?.result as string);
     };
     reader.readAsDataURL(croppedFile);
     setShowEditor(false);
-    setEditorSrc(null);
   };
 
   const handleEditorCancel = () => {
-    // If cancelling from editor without having a preview yet, reset everything
-    if (!preview) {
-      selectedFile.current = null;
-      setEditorSrc(null);
-    }
     setShowEditor(false);
   };
 
@@ -120,7 +116,7 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </button>
         </div>
 
-        {/* ── EDITOR MODE ── */}
+        {/* ── EDITOR MODE (only when user explicitly opens it) ── */}
         {showEditor && editorSrc ? (
           <ImageEditor
             imageSrc={editorSrc}
@@ -148,14 +144,12 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <div className="relative">
                   <img src={preview} alt="Preview" className="max-h-48 mx-auto rounded-xl shadow-sm" />
                   <div className="flex justify-center gap-2 mt-3">
-                    {/* Re-edit button */}
+                    {/* Optional edit button */}
                     <button
                       type="button"
-                      onClick={() => {
-                        if (editorSrc || preview) {
-                          setEditorSrc(preview);
-                          setShowEditor(true);
-                        }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowEditor(true);
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-sm font-medium transition-all"
                     >
@@ -167,7 +161,7 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     {/* Remove button */}
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); setPreview(null); selectedFile.current = null; }}
+                      onClick={(e) => { e.stopPropagation(); setPreview(null); setEditorSrc(null); selectedFile.current = null; }}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium transition-all"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,7 +177,7 @@ export function UploadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <p className="text-slate-600 dark:text-white/60 font-medium">Arrastrá una imagen o hacé clic para seleccionar</p>
-                  <p className="text-slate-400 dark:text-white/30 text-xs mt-1">Podés recortarla y rotarla antes de subir</p>
+                  <p className="text-slate-400 dark:text-white/30 text-xs mt-1">Podés editarla antes de subir (opcional)</p>
                 </>
               )}
               <input
