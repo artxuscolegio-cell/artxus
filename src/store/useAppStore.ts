@@ -462,9 +462,10 @@ export const useAppStore = create<AppState>()(
 
           // Send push notification to admin (via ntfy.sh) with Aprobar/Rechazar buttons.
           // The buttons call /api/moderate?action=...&photoId=...&token=... on Vercel.
+          // Note: title goes into an HTTP header so it must be ASCII-only.
           sendAdminPushNotification({
-            title: '🎨 Nueva foto pendiente — Artxus',
-            body: `@${currentUser.username} subió una foto${description ? ': ' + description.slice(0, 60) : ''}. Tocá para moderar.`,
+            title: 'Nueva foto pendiente - Artxus',
+            body: `@${currentUser.username} subio una foto${description ? ': ' + description.slice(0, 60) : ''}. Toca para moderar.`,
             url: window.location.origin,
             photoId: realPhotoId,
           }).catch(console.error);

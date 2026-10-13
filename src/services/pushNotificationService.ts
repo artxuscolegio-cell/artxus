@@ -54,12 +54,15 @@ export async function sendAdminPushNotification(payload: {
   url?: string;
   photoId?: string;
 }) {
+  // HTTP headers only allow ISO-8859-1 — no emojis, no em-dashes, no UTF-8.
+  const sanitize = (s: string) => s.replace(/[^\x00-\xFF]/g, '').replace(/\u2014/g, '-').trim();
+
   const headers: Record<string, string> = {
-    'Title': payload.title,
-    'Content-Type': 'text/plain',
+    'Title': sanitize(payload.title),
+    'Content-Type': 'text/plain; charset=utf-8',
     'Click': payload.url || window.location.origin,
     'Priority': 'high',
-    'Tags': 'art,camera,artxus',
+    'Tags': 'art,artxus',
   };
 
   // Add action buttons if photoId and moderation endpoint are configured
@@ -68,9 +71,10 @@ export async function sendAdminPushNotification(payload: {
     const rejectUrl  = buildModerateUrl('reject',  payload.photoId);
 
     // ntfy Actions format: "http, Label, URL, method=POST; http, Label, URL, method=POST"
+    // Action labels must be ASCII-only (HTTP header restriction)
     headers['Actions'] = [
-      `http, ✅ Aprobar, ${approveUrl}, method=GET, clear=true`,
-      `http, 🚫 Rechazar, ${rejectUrl}, method=GET, clear=true`,
+      `http, Aprobar, ${approveUrl}, method=GET, clear=true`,
+      `http, Rechazar, ${rejectUrl}, method=GET, clear=true`,
     ].join('; ');
   }
 
