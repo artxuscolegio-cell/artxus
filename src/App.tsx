@@ -12,6 +12,41 @@ const hexToRgb = (hex: string) => {
   return `${r} ${g} ${b}`;
 };
 
+// ── Apply saved theme IMMEDIATELY (before first React render) ──────────────
+// This prevents the flash of default colors/theme on page reload.
+// Zustand persist saves to localStorage under 'artxus-storage'.
+(function applyStoredTheme() {
+  try {
+    const raw = localStorage.getItem('artxus-storage');
+    if (!raw) return;
+    const stored = JSON.parse(raw);
+    const settings = stored?.state?.settings;
+    if (!settings) return;
+
+    const root = document.documentElement;
+
+    // Apply dark/light class
+    if (settings.theme === 'dark') {
+      root.classList.add('dark');
+    } else if (settings.theme === 'light') {
+      root.classList.remove('dark');
+    } else if (settings.theme === 'auto') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+
+    // Apply primary color CSS variable
+    if (settings.primaryColor) {
+      root.style.setProperty('--color-primary', hexToRgb(settings.primaryColor));
+    }
+  } catch (_) {
+    // If localStorage is unavailable or data is corrupt, use defaults silently
+  }
+})();
+
 function App() {
   const { authMode, isAuthenticated, initAppwrite, settings } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
